@@ -1,0 +1,624 @@
+{
+    "restaurants": [
+        {
+            "name": "Kaveri Restaurant",
+            "cuisine": [
+                "Indian",
+                "Hyderabadi",
+                "South Indian"
+            ],
+            "description": "A modern Indian fine-dining restaurant serving heritage recipes, aromatic biryanis, rich curries, and handcrafted desserts in a warm family-friendly atmosphere.",
+            "location": "Hyderabad",
+            "address": "12-3-123, Banjara Hills, Hyderabad 500034",
+            "phone": "+91-40-23456789",
+            "price_range": "moderate",
+            "rating": 4.8,
+            "tags": [
+                "family-friendly",
+                "biryani",
+                "romantic",
+                "authentic",
+                "vegetarian-friendly"
+            ],
+            "working_hours": {
+                "monday_to_friday": "11:00 AM - 11:00 PM",
+                "saturday": "11:00 AM - 12:00 AM",
+                "sunday": "12:00 PM - 11:00 PM"
+            },
+            "menus": [
+                {
+                    "name": "Samosa",
+                    "description": "Crisp pastry filled with spiced potatoes and peas, served with mint chutney.",
+                    "price": 75,
+                    "section": "appetizer",
+                    "category": "Street Food",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 10,
+                    "tags": [
+                        "classic",
+                        "crispy",
+                        "snack"
+                    ]
+                },
+                {
+                    "name": "Paneer Tikka",
+                    "description": "Smoky grilled cottage cheese cubes marinated in yogurt and spices.",
+                    "price": 280,
+                    "section": "appetizer",
+                    "category": "Tandoor Starters",
+                    "vegetarian": true,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 15,
+                    "tags": [
+                        "tandoor",
+                        "grilled",
+                        "popular"
+                    ]
+                },
+                {
+                    "name": "Chicken 65",
+                    "description": "Fiery, deep-fried chicken tossed with curry leaves and green chilies.",
+                    "price": 320,
+                    "section": "appetizer",
+                    "category": "Spicy Starters",
+                    "vegetarian": false,
+                    "spicy_level": "very_spicy",
+                    "is_available": true,
+                    "preparation_time": 15,
+                    "tags": [
+                        "spicy",
+                        "crispy",
+                        "signature"
+                    ]
+                },
+                {
+                    "name": "Pani Puri",
+                    "description": "Crisp puri shells filled with potatoes, chickpeas, and tangy tamarind water.",
+                    "price": 90,
+                    "section": "appetizer",
+                    "category": "Street Food",
+                    "vegetarian": true,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 8,
+                    "tags": [
+                        "street-food",
+                        "crunchy",
+                        "refreshing"
+                    ]
+                },
+                {
+                    "name": "Butter Chicken",
+                    "description": "Tender chicken simmered in a creamy tomato gravy with a touch of fenugreek.",
+                    "price": 420,
+                    "section": "main_course",
+                    "category": "Creamy Curries",
+                    "vegetarian": false,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 25,
+                    "tags": [
+                        "rich",
+                        "comfort-food",
+                        "signature"
+                    ]
+                },
+                {
+                    "name": "Chicken Tikka Masala",
+                    "description": "Smoky grilled chicken in a tangy onion-tomato gravy with aromatic spices.",
+                    "price": 410,
+                    "section": "main_course",
+                    "category": "Classic Curries",
+                    "vegetarian": false,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 25,
+                    "tags": [
+                        "classic",
+                        "tikka",
+                        "spicy"
+                    ]
+                },
+                {
+                    "name": "Mutton Rogan Josh",
+                    "description": "Slow-cooked lamb in a fragrant Kashmiri-style gravy with fennel and ginger.",
+                    "price": 540,
+                    "section": "main_course",
+                    "category": "Royal Curries",
+                    "vegetarian": false,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 35,
+                    "tags": [
+                        "royal",
+                        "slow-cooked",
+                        "rich"
+                    ]
+                },
+                {
+                    "name": "Chicken Vindaloo",
+                    "description": "Goan-style spicy curry with garlic, vinegar, and deep layers of heat.",
+                    "price": 390,
+                    "section": "main_course",
+                    "category": "Spicy Curries",
+                    "vegetarian": false,
+                    "spicy_level": "very_spicy",
+                    "is_available": true,
+                    "preparation_time": 25,
+                    "tags": [
+                        "goan",
+                        "spicy",
+                        "fiery"
+                    ]
+                },
+                {
+                    "name": "Paneer Butter Masala",
+                    "description": "Soft paneer cubes cooked in a mild tomato-cashew gravy with cream.",
+                    "price": 310,
+                    "section": "main_course",
+                    "category": "Vegetarian Curries",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 20,
+                    "tags": [
+                        "vegetarian",
+                        "creamy",
+                        "favorite"
+                    ]
+                },
+                {
+                    "name": "Dal Makhani",
+                    "description": "Slow-cooked black lentils finished with butter, cream, and smoky flavors.",
+                    "price": 240,
+                    "section": "main_course",
+                    "category": "Vegetarian Curries",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 25,
+                    "tags": [
+                        "comfort",
+                        "slow-cooked",
+                        "lentils"
+                    ]
+                },
+                {
+                    "name": "Palak Paneer",
+                    "description": "Fresh spinach curry layered with soft paneer and gentle Indian spices.",
+                    "price": 290,
+                    "section": "main_course",
+                    "category": "Vegetarian Curries",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 20,
+                    "tags": [
+                        "greens",
+                        "vegetarian",
+                        "healthy"
+                    ]
+                },
+                {
+                    "name": "Chana Masala",
+                    "description": "Tangy chickpeas cooked with onion, tomato, and traditional spice notes.",
+                    "price": 220,
+                    "section": "main_course",
+                    "category": "Vegetarian Curries",
+                    "vegetarian": true,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 18,
+                    "tags": [
+                        "protein-rich",
+                        "street-style",
+                        "classic"
+                    ]
+                },
+                {
+                    "name": "Chicken Dum Biryani",
+                    "description": "Aromatic basmati rice layered with slow-cooked chicken, saffron, and fried onions.",
+                    "price": 340,
+                    "section": "main_course",
+                    "category": "Biryanis",
+                    "vegetarian": false,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 35,
+                    "tags": [
+                        "biryani",
+                        "signature",
+                        "fragrant"
+                    ]
+                },
+                {
+                    "name": "Mutton Dum Biryani",
+                    "description": "Royal-style biryani with tender mutton, saffron, and hand-ground spices.",
+                    "price": 480,
+                    "section": "main_course",
+                    "category": "Biryanis",
+                    "vegetarian": false,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 40,
+                    "tags": [
+                        "premium",
+                        "biryani",
+                        "royal"
+                    ]
+                },
+                {
+                    "name": "Vegetable Biryani",
+                    "description": "Fragrant rice cooked with fresh vegetables, herbs, and spices.",
+                    "price": 250,
+                    "section": "main_course",
+                    "category": "Biryanis",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 25,
+                    "tags": [
+                        "vegetarian",
+                        "aromatic",
+                        "comfort"
+                    ]
+                },
+                {
+                    "name": "Hyderabadi Haleem",
+                    "description": "Slow-cooked wheat and meat delicacy with rich masala and a silky texture.",
+                    "price": 320,
+                    "section": "main_course",
+                    "category": "Specialties",
+                    "vegetarian": false,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 30,
+                    "tags": [
+                        "heritage",
+                        "special",
+                        "seasonal"
+                    ]
+                },
+                {
+                    "name": "Plain Naan",
+                    "description": "Soft tandoor-baked flatbread with a fluffy interior.",
+                    "price": 45,
+                    "section": "main_course",
+                    "category": "Breads",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 8,
+                    "tags": [
+                        "naan",
+                        "classic",
+                        "tandoor"
+                    ]
+                },
+                {
+                    "name": "Butter Naan",
+                    "description": "Classic naan brushed with butter and served hot.",
+                    "price": 55,
+                    "section": "main_course",
+                    "category": "Breads",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 8,
+                    "tags": [
+                        "buttery",
+                        "popular",
+                        "soft"
+                    ]
+                },
+                {
+                    "name": "Garlic Naan",
+                    "description": "Tandoor-baked naan topped with garlic, coriander, and butter.",
+                    "price": 65,
+                    "section": "main_course",
+                    "category": "Breads",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 8,
+                    "tags": [
+                        "garlic",
+                        "aromatic",
+                        "favorite"
+                    ]
+                },
+                {
+                    "name": "Rumali Roti",
+                    "description": "Thin, soft handkerchief bread perfect for curries and kebabs.",
+                    "price": 40,
+                    "section": "main_course",
+                    "category": "Breads",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 7,
+                    "tags": [
+                        "light",
+                        "soft",
+                        "bread"
+                    ]
+                },
+                {
+                    "name": "Steamed Basmati Rice",
+                    "description": "Fluffy long-grain basmati rice served as a perfect side.",
+                    "price": 95,
+                    "section": "main_course",
+                    "category": "Rice",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 10,
+                    "tags": [
+                        "rice",
+                        "classic",
+                        "neutral"
+                    ]
+                },
+                {
+                    "name": "Jeera Rice",
+                    "description": "Basmati rice tempered with cumin, ghee, and fragrant spices.",
+                    "price": 120,
+                    "section": "main_course",
+                    "category": "Rice",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 10,
+                    "tags": [
+                        "aromatic",
+                        "flavorful",
+                        "rice"
+                    ]
+                },
+                {
+                    "name": "Lemon Rice",
+                    "description": "South Indian-style rice with lemon, mustard seeds, and curry leaves.",
+                    "price": 130,
+                    "section": "main_course",
+                    "category": "Rice",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 10,
+                    "tags": [
+                        "south-indian",
+                        "tangy",
+                        "comfort"
+                    ]
+                },
+                {
+                    "name": "Gulab Jamun",
+                    "description": "Soft khoya dumplings soaked in cardamom-infused sugar syrup.",
+                    "price": 85,
+                    "section": "dessert",
+                    "category": "Desserts",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 10,
+                    "tags": [
+                        "dessert",
+                        "sweet",
+                        "classic"
+                    ]
+                },
+                {
+                    "name": "Kheer",
+                    "description": "Creamy rice pudding with nuts, saffron, and cardamom.",
+                    "price": 95,
+                    "section": "dessert",
+                    "category": "Desserts",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 12,
+                    "tags": [
+                        "dessert",
+                        "traditional",
+                        "rich"
+                    ]
+                },
+                {
+                    "name": "Kesari Phirni",
+                    "description": "Slow-cooked rice pudding flavored with saffron and pistachio.",
+                    "price": 110,
+                    "section": "dessert",
+                    "category": "Desserts",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 12,
+                    "tags": [
+                        "dessert",
+                        "saffron",
+                        "premium"
+                    ]
+                },
+                {
+                    "name": "Mango Lassi",
+                    "description": "Refreshing yogurt drink blended with ripe mango and a touch of cardamom.",
+                    "price": 120,
+                    "section": "freshment",
+                    "category": "Cool Drinks",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 5,
+                    "tags": [
+                        "drink",
+                        "cooling",
+                        "fruit"
+                    ]
+                },
+                {
+                    "name": "Sweet Lassi",
+                    "description": "Chilled yogurt drink with a silky texture and mild sweetness.",
+                    "price": 90,
+                    "section": "freshment",
+                    "category": "Cool Drinks",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 5,
+                    "tags": [
+                        "drink",
+                        "cooling",
+                        "traditional"
+                    ]
+                },
+                {
+                    "name": "Masala Chaas",
+                    "description": "Refreshing buttermilk infused with cumin, mint, and a pinch of salt.",
+                    "price": 80,
+                    "section": "freshment",
+                    "category": "Cool Drinks",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 5,
+                    "tags": [
+                        "drink",
+                        "buttermilk",
+                        "cooling"
+                    ]
+                },
+                {
+                    "name": "Mint Lime Soda",
+                    "description": "Sparkling soda with lime, mint, and a hint of sweetness.",
+                    "price": 95,
+                    "section": "drink",
+                    "category": "Mocktails",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 5,
+                    "tags": [
+                        "mocktail",
+                        "refreshing",
+                        "sparkling"
+                    ]
+                },
+                {
+                    "name": "Fresh Lemon Juice",
+                    "description": "Cold lemon juice with a hint of salt and sugar.",
+                    "price": 70,
+                    "section": "drink",
+                    "category": "Juices",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 3,
+                    "tags": [
+                        "juice",
+                        "refreshing",
+                        "classic"
+                    ]
+                },
+                {
+                    "name": "Masala Tea",
+                    "description": "Strong Indian tea brewed with spices, milk, and a fragrant aroma.",
+                    "price": 60,
+                    "section": "drink",
+                    "category": "Tea",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 5,
+                    "tags": [
+                        "tea",
+                        "warm",
+                        "comfort"
+                    ]
+                },
+                {
+                    "name": "Filter Coffee",
+                    "description": "South Indian-style coffee brewed fresh and served hot.",
+                    "price": 70,
+                    "section": "drink",
+                    "category": "Coffee",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 5,
+                    "tags": [
+                        "coffee",
+                        "traditional",
+                        "hot"
+                    ]
+                },
+                {
+                    "name": "Aloo Tikki Chaat",
+                    "description": "Crunchy potato patties topped with yogurt, tamarind, and mint chutney.",
+                    "price": 120,
+                    "section": "appetizer",
+                    "category": "Street Food",
+                    "vegetarian": true,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 10,
+                    "tags": [
+                        "chaat",
+                        "street-food",
+                        "crunchy"
+                    ]
+                },
+                {
+                    "name": "Bhindi Masala",
+                    "description": "Crispy okra stir-fried with onions, tomatoes, and aromatic spices.",
+                    "price": 220,
+                    "section": "main_course",
+                    "category": "Vegetarian Curries",
+                    "vegetarian": true,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 18,
+                    "tags": [
+                        "okra",
+                        "vegetarian",
+                        "spiced"
+                    ]
+                },
+                {
+                    "name": "Methi Malai Mutter",
+                    "description": "Fenugreek leaves simmered with peas in a creamy mild gravy.",
+                    "price": 260,
+                    "section": "main_course",
+                    "category": "Vegetarian Curries",
+                    "vegetarian": true,
+                    "spicy_level": "mild",
+                    "is_available": true,
+                    "preparation_time": 20,
+                    "tags": [
+                        "fenugreek",
+                        "vegetarian",
+                        "mild"
+                    ]
+                },
+                {
+                    "name": "Kadhai Paneer",
+                    "description": "Paneer tossed with bell peppers, onion, and freshly crushed coriander seeds.",
+                    "price": 300,
+                    "section": "main_course",
+                    "category": "Vegetarian Curries",
+                    "vegetarian": true,
+                    "spicy_level": "medium",
+                    "is_available": true,
+                    "preparation_time": 20,
+                    "tags": [
+                        "wok",
+                        "spicy",
+                        "paneer"
+                    ]
+                }
+            ]
+        }
+    ]
+}

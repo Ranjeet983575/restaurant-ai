@@ -1,0 +1,28 @@
+{
+    "name": "kaveri-api",
+    "version": "1.0.0",
+    "description": "Kaveri restaurant backend with MongoDB storage, semantic search, and menu management",
+    "private": true,
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js"
+    },
+    "dependencies": {
+        "@xenova/transformers": "^2.6.4",
+        "dotenv": "^17.4.2",
+        "express": "^4.19.2",
+        "mongoose": "^8.0.0",
+        "swagger-jsdoc": "^6.3.0",
+        "swagger-ui-express": "^5.0.1"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.0",
+        "@types/mongoose": "^5.11.97",
+        "@types/node": "^22.10.1",
+        "@types/swagger-jsdoc": "^6.0.4",
+        "@types/swagger-ui-express": "^4.1.8",
+        "tsx": "^4.19.1",
+        "typescript": "^5.7.3"
+    }
+}
