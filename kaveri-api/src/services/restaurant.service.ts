@@ -47,6 +47,76 @@ export interface MenuSearchResult {
     similarity_score: number;
 }
 
+export interface MenuSearchItem {
+    menu: {
+        _id: string;
+        restaurantId: string;
+        restaurantName: string;
+        name: string;
+        description: string;
+        price: number;
+        section: string;
+        category: string;
+        vegetarian?: boolean;
+        spicy_level?: 'mild' | 'medium' | 'spicy' | 'very_spicy';
+        is_available?: boolean;
+        preparation_time?: number;
+        tags?: string[];
+    };
+    restaurant: {
+        _id: string;
+        name: string;
+        cuisine: string[];
+        description: string;
+        location: string;
+        address: string;
+        phone: string;
+        price_range: string;
+        rating?: number;
+        tags?: string[];
+        working_hours?: {
+            monday_to_friday?: string;
+            saturday?: string;
+            sunday?: string;
+        };
+    };
+    similarity_score: number;
+}
+
+function sanitizeMenuSearchResult(result: MenuSearchResult): MenuSearchItem {
+    return {
+        similarity_score: result.similarity_score,
+        menu: {
+            _id: result.menu._id.toString(),
+            restaurantId: result.menu.restaurantId.toString(),
+            restaurantName: result.menu.restaurantName,
+            name: result.menu.name,
+            description: result.menu.description,
+            price: result.menu.price,
+            section: result.menu.section,
+            category: result.menu.category,
+            vegetarian: result.menu.vegetarian,
+            spicy_level: result.menu.spicy_level,
+            is_available: result.menu.is_available,
+            preparation_time: result.menu.preparation_time,
+            tags: result.menu.tags,
+        },
+        restaurant: {
+            _id: result.restaurant._id.toString(),
+            name: result.restaurant.name,
+            cuisine: result.restaurant.cuisine,
+            description: result.restaurant.description,
+            location: result.restaurant.location,
+            address: result.restaurant.address,
+            phone: result.restaurant.phone,
+            price_range: result.restaurant.price_range,
+            rating: result.restaurant.rating,
+            tags: result.restaurant.tags,
+            working_hours: result.restaurant.working_hours,
+        },
+    };
+}
+
 async function ensureRestaurantEmbedding(restaurant: IRestaurant): Promise<void> {
     if (!restaurant.vector_embedding || restaurant.vector_embedding.length === 0) {
         try {
@@ -263,6 +333,150 @@ export async function bulkCreateRestaurants(inputs: CreateRestaurantInput[]): Pr
 /**
  * Semantic search - find restaurants similar to query
  */
+export interface MenuSearchResponse {
+    intent: 'hours' | 'overview' | 'menu' | 'diet' | 'other';
+    query: string;
+    text: string;
+    items: MenuSearchItem[];
+}
+
+function isTimeQuery(query: string): boolean {
+    const normalized = query.toLowerCase();
+    return /\b(hour|hours|open|close|time|opening|closing)\b/.test(normalized);
+}
+
+function isOverviewQuery(query: string): boolean {
+    const normalized = query.toLowerCase();
+    return /\b(overview|about|tell me about|who are you|what is this|restaurant overview|describe)\b/.test(normalized);
+}
+
+function isMenuQuery(query: string): boolean {
+    const normalized = query.toLowerCase();
+    return /\b(menu|what do you serve|show me the menu|dish|dishes|food|vegan|vegetarian|non-veg|specials|recommend)\b/.test(normalized);
+}
+
+function isVegetarianQuery(query: string): boolean {
+    const normalized = query.toLowerCase();
+    return /\b(vegan|vegetarian|veg|vegetarian-friendly|plant[- ]based)\b/.test(normalized);
+}
+
+function isVeganQuery(query: string): boolean {
+    const normalized = query.toLowerCase();
+    return /\b(vegan|plant[- ]based)\b/.test(normalized);
+}
+
+function isNonVegetarianQuery(query: string): boolean {
+    const normalized = query.toLowerCase();
+    return /\b(non[- ]veg|nonveg|non vegetarian|non-vegetarian|meat|chicken|mutton|fish|seafood)\b/.test(normalized);
+}
+
+function isDietQuery(query: string): boolean {
+    return isVegetarianQuery(query) || isVeganQuery(query) || isNonVegetarianQuery(query) || /\b(gluten[- ]free|halal|healthy|spicy|mild|medium)\b/.test(query.toLowerCase());
+}
+
+function formatWorkingHours(restaurant: IRestaurant | null): string {
+    if (!restaurant) {
+        return 'Restaurant hours are not available right now.';
+    }
+    return `Our hours are ${restaurant.working_hours.monday_to_friday} Monday through Friday, ${restaurant.working_hours.saturday} on Saturday, and ${restaurant.working_hours.sunday} on Sunday.`;
+}
+
+function summarizeMenuItems(items: MenuSearchItem[], limit = 5): string[] {
+    return items.slice(0, limit).map(item => {
+        const menuName = item.menu.name || 'Menu item';
+        const restaurantName = item.restaurant.name || 'Restaurant';
+        return `${menuName} at ${restaurantName}`;
+    });
+}
+
+export async function semanticSearchMenusWithContext(
+    query: string,
+    limit: number = 10
+): Promise<MenuSearchResponse> {
+    const rawResults = await semanticSearchMenus(query, limit);
+    const restaurant = await Restaurant.findOne();
+    const results = rawResults.map(sanitizeMenuSearchResult);
+
+    if (isTimeQuery(query)) {
+        return {
+            intent: 'hours',
+            query,
+            text: formatWorkingHours(restaurant),
+            items: results,
+        };
+    }
+
+    if (isOverviewQuery(query)) {
+        const popularItems = summarizeMenuItems(results, 5);
+        const description = restaurant?.description || 'This restaurant offers a selection of popular dishes and a warm atmosphere.';
+        const summary = popularItems.length
+            ? `${description} Popular menu items include ${popularItems.join(', ')}.`
+            : description;
+        return {
+            intent: 'overview',
+            query,
+            text: summary,
+            items: results,
+        };
+    }
+
+    if (results.length === 0) {
+        const fallbackText = isMenuQuery(query)
+            ? 'I could not find matching menu items for your request. Try asking about another dish or menu type.'
+            : 'I could not find any matching menu items for your request. Try a different search phrase or ask about our hours or specialties.';
+        return {
+            intent: isMenuQuery(query) ? 'menu' : 'other',
+            query,
+            text: fallbackText,
+            items: [],
+        };
+    }
+
+    const vegetarianResults = results.filter(item => item.menu.vegetarian === true);
+    const veganResults = results.filter(item => item.menu.tags?.some(tag => /vegan/i.test(tag)) || item.menu.name.toLowerCase().includes('vegan'));
+    const nonVegResults = results.filter(item => item.menu.vegetarian === false);
+
+    let selectedResults = results;
+    let filteredText = '';
+
+    if (isVeganQuery(query)) {
+        selectedResults = veganResults.length > 0 ? veganResults : vegetarianResults;
+        filteredText = selectedResults.length > 0
+            ? `Here are vegan-friendly items that match your request: ${summarizeMenuItems(selectedResults, 5).join(', ')}.`
+            : 'I could not find clearly vegan items, but here are some vegetarian-friendly options.';
+    } else if (isVegetarianQuery(query)) {
+        selectedResults = vegetarianResults.length > 0 ? vegetarianResults : results;
+        filteredText = selectedResults.length > 0
+            ? `Here are vegetarian items that match your request: ${summarizeMenuItems(selectedResults, 5).join(', ')}.`
+            : 'I could not find clearly vegetarian items for that request.';
+    } else if (isNonVegetarianQuery(query)) {
+        selectedResults = nonVegResults.length > 0 ? nonVegResults : results;
+        filteredText = selectedResults.length > 0
+            ? `Here are non-vegetarian items that match your request: ${summarizeMenuItems(selectedResults, 5).join(', ')}.`
+            : 'I could not find clearly non-vegetarian items for that request.';
+    } else {
+        const items = summarizeMenuItems(results, 5);
+        filteredText = isMenuQuery(query)
+            ? `Here are some matching menu items: ${items.join(', ')}.`
+            : `I found these relevant menu items: ${items.join(', ')}.`;
+    }
+
+    const intent = isVeganQuery(query)
+        ? 'diet'
+        : isVegetarianQuery(query)
+            ? 'diet'
+            : isNonVegetarianQuery(query)
+                ? 'diet'
+                : 'menu';
+
+    return {
+        intent,
+        query,
+        text: filteredText,
+        items: selectedResults,
+    };
+}
+
 export async function semanticSearchRestaurants(
     query: string,
     limit: number = 10

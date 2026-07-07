@@ -127,7 +127,7 @@ router.post('/menus/search', async (req, res) => {
             res.status(400).json({ success: false, error: 'Query is required' });
             return;
         }
-        const results = await (0, restaurant_service_1.semanticSearchMenus)(query, limit);
+        const results = await (0, restaurant_service_1.semanticSearchMenusWithContext)(query, limit);
         res.json({ success: true, data: results });
     }
     catch (error) {

@@ -8,7 +8,7 @@ import { connectDB } from './config/mongodb';
 import restaurantRoutes from './routes/restaurant.routes';
 import { seedKaveriData } from './scripts/seed';
 import { queryLLM } from './services/llm.service';
-import { semanticSearchMenus } from './services/restaurant.service';
+import { semanticSearchMenusWithContext } from './services/restaurant.service';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -123,11 +123,11 @@ app.post('/search', async (req: Request, res: Response) => {
             });
         }
 
-        const results = await semanticSearchMenus(query, limit);
+        const results = await semanticSearchMenusWithContext(query, limit);
 
         return res.json({
             success: true,
-            results,
+            data: results,
         });
     } catch (error) {
         console.error('Search Error:', error);

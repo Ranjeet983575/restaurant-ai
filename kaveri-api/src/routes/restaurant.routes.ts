@@ -6,7 +6,7 @@ import {
     getRestaurantById,
     getAllRestaurants,
     semanticSearchRestaurants,
-    semanticSearchMenus,
+    semanticSearchMenusWithContext,
     bulkCreateRestaurants,
     addMenuItem,
     updateMenuItem,
@@ -149,7 +149,7 @@ router.post('/menus/search', async (req: Request<{}, {}, { query: string; limit?
             return;
         }
 
-        const results = await semanticSearchMenus(query, limit);
+        const results = await semanticSearchMenusWithContext(query, limit);
         res.json({ success: true, data: results });
     } catch (error) {
         res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Search error' });
