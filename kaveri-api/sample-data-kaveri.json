@@ -620,5 +620,156 @@
                 }
             ]
         }
+    ],
+    "profiles": [
+        {
+            "name": "Kaveri Restaurant",
+            "description": "A modern Indian restaurant with authentic curries, biryanis, and family-friendly service.",
+            "details": "Known for weekend brunch, private dining, and vegetarian-friendly options.",
+            "address": "12-3-123, Banjara Hills, Hyderabad 500034",
+            "location": "Hyderabad",
+            "phone": "+91-40-23456789",
+            "restaurantType": "fine_dining",
+            "cuisineTypes": [
+                "Indian",
+                "Hyderabadi",
+                "South Indian"
+            ],
+            "seatingCapacity": 80,
+            "timings": {
+                "monday_to_friday": "11:00 AM - 10:00 PM",
+                "saturday": "11:00 AM - 11:00 PM",
+                "sunday": "12:00 PM - 10:00 PM",
+                "lunch": "12:00 PM - 3:00 PM",
+                "dinner": "6:00 PM - 10:00 PM"
+            },
+            "tags": [
+                "family-friendly",
+                "vegetarian-friendly",
+                "private-dining"
+            ]
+        }
+    ],
+    "bookingSlots": [
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Monday",
+            "startTime": "11:00",
+            "endTime": "12:00",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Monday",
+            "startTime": "12:30",
+            "endTime": "13:30",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Monday",
+            "startTime": "18:30",
+            "endTime": "19:30",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Tuesday",
+            "startTime": "12:00",
+            "endTime": "13:00",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Tuesday",
+            "startTime": "19:00",
+            "endTime": "20:00",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Wednesday",
+            "startTime": "13:00",
+            "endTime": "14:00",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Wednesday",
+            "startTime": "20:00",
+            "endTime": "21:00",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Thursday",
+            "startTime": "11:30",
+            "endTime": "12:30",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Thursday",
+            "startTime": "18:00",
+            "endTime": "19:00",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Friday",
+            "startTime": "12:30",
+            "endTime": "13:30",
+            "capacity": 6,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Friday",
+            "startTime": "19:30",
+            "endTime": "20:30",
+            "capacity": 6,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Saturday",
+            "startTime": "13:00",
+            "endTime": "14:00",
+            "capacity": 6,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Saturday",
+            "startTime": "19:00",
+            "endTime": "20:00",
+            "capacity": 6,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Sunday",
+            "startTime": "12:00",
+            "endTime": "13:00",
+            "capacity": 4,
+            "available": true
+        },
+        {
+            "restaurantName": "Kaveri Restaurant",
+            "day": "Sunday",
+            "startTime": "19:00",
+            "endTime": "20:00",
+            "capacity": 4,
+            "available": true
+        }
     ]
 }

@@ -182,7 +182,6 @@ export async function createRestaurant(input: CreateRestaurantInput): Promise<IR
                 });
                 await menu.save();
                 await ensureMenuEmbedding(menu as any);
-                console.log(`Inserted menu item: ${menu.name} for ${restaurant.name}`);
             }
         }
 

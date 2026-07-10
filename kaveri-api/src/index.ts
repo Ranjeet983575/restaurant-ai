@@ -6,9 +6,10 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import { connectDB } from './config/mongodb';
 import restaurantRoutes from './routes/restaurant.routes';
+import restaurantProfileRoutes from './routes/restaurant-profile.routes';
+import bookingRoutes from './routes/booking.routes';
+import chatRoutes from './routes/chat.routes';
 import { seedKaveriData } from './scripts/seed';
-import { queryLLM } from './services/llm.service';
-import { semanticSearchMenusWithContext } from './services/restaurant.service';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -78,71 +79,16 @@ app.get('/health', (_req: Request, res: Response) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 /**
- * Chat Endpoint
+ * Chat Route
  */
-app.post('/chat', async (req: Request, res: Response) => {
-    try {
-        const { messages } = req.body;
-
-        if (!messages || !Array.isArray(messages)) {
-            return res.status(400).json({
-                success: false,
-                error: 'messages array is required',
-            });
-        }
-
-        const lastMessage = messages[messages.length - 1]?.text || '';
-
-        const reply = await queryLLM(lastMessage);
-
-        return res.json({
-            success: true,
-            reply,
-        });
-    } catch (error) {
-        console.error('Chat Error:', error);
-
-        return res.status(500).json({
-            success: false,
-            error: 'Failed to process chat',
-        });
-    }
-});
-
-/**
- * Semantic Search
- */
-app.post('/search', async (req: Request, res: Response) => {
-    try {
-        const { query, limit = 5 } = req.body;
-
-        if (!query) {
-            return res.status(400).json({
-                success: false,
-                error: 'query is required',
-            });
-        }
-
-        const results = await semanticSearchMenusWithContext(query, limit);
-
-        return res.json({
-            success: true,
-            data: results,
-        });
-    } catch (error) {
-        console.error('Search Error:', error);
-
-        return res.status(500).json({
-            success: false,
-            error: 'Failed to perform search',
-        });
-    }
-});
+app.use('/chat', chatRoutes);
 
 /**
  * Restaurant APIs
  */
 app.use('/api/restaurants', restaurantRoutes);
+app.use('/api/restaurant-profiles', restaurantProfileRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 /**
  * Global Error Handler
