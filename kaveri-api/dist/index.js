@@ -10,9 +10,10 @@ const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const swagger_1 = require("./config/swagger");
 const mongodb_1 = require("./config/mongodb");
 const restaurant_routes_1 = __importDefault(require("./routes/restaurant.routes"));
+const restaurant_profile_routes_1 = __importDefault(require("./routes/restaurant-profile.routes"));
+const booking_routes_1 = __importDefault(require("./routes/booking.routes"));
+const chat_routes_1 = __importDefault(require("./routes/chat.routes"));
 const seed_1 = require("./scripts/seed");
-const llm_service_1 = require("./services/llm.service");
-const restaurant_service_1 = require("./services/restaurant.service");
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
 /**
@@ -69,62 +70,15 @@ app.get('/health', (_req, res) => {
  */
 app.use('/api-docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.swaggerSpec));
 /**
- * Chat Endpoint
+ * Chat Route
  */
-app.post('/chat', async (req, res) => {
-    try {
-        const { messages } = req.body;
-        if (!messages || !Array.isArray(messages)) {
-            return res.status(400).json({
-                success: false,
-                error: 'messages array is required',
-            });
-        }
-        const lastMessage = messages[messages.length - 1]?.text || '';
-        const reply = await (0, llm_service_1.queryLLM)(lastMessage);
-        return res.json({
-            success: true,
-            reply,
-        });
-    }
-    catch (error) {
-        console.error('Chat Error:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Failed to process chat',
-        });
-    }
-});
-/**
- * Semantic Search
- */
-app.post('/search', async (req, res) => {
-    try {
-        const { query, limit = 5 } = req.body;
-        if (!query) {
-            return res.status(400).json({
-                success: false,
-                error: 'query is required',
-            });
-        }
-        const results = await (0, restaurant_service_1.semanticSearchMenusWithContext)(query, limit);
-        return res.json({
-            success: true,
-            data: results,
-        });
-    }
-    catch (error) {
-        console.error('Search Error:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Failed to perform search',
-        });
-    }
-});
+app.use('/chat', chat_routes_1.default);
 /**
  * Restaurant APIs
  */
 app.use('/api/restaurants', restaurant_routes_1.default);
+app.use('/api/restaurant-profiles', restaurant_profile_routes_1.default);
+app.use('/api/bookings', booking_routes_1.default);
 /**
  * Global Error Handler
  */

@@ -17,17 +17,17 @@ const router = Router();
  *             type: object
  *             required: [messages]
  *             properties:
+ *               query:
+ *                 type: string
+ *                 description: Main chat or search query. This is the preferred field.
  *               messages:
  *                 type: array
- *                 description: Chat history payload used for conversational requests
+ *                 description: Optional legacy chat history payload. If provided without query, the last message text is used.
  *                 items:
  *                   type: object
  *                   properties:
  *                     text:
  *                       type: string
- *               query:
- *                 type: string
- *                 description: Optional search-only payload when you want semantic retrieval without chat context
  *               limit:
  *                 type: number
  *                 description: Optional limit for semantic search results

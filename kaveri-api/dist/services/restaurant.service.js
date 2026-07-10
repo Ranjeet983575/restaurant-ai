@@ -114,7 +114,6 @@ async function createRestaurant(input) {
                 });
                 await menu.save();
                 await ensureMenuEmbedding(menu);
-                console.log(`Inserted menu item: ${menu.name} for ${restaurant.name}`);
             }
         }
         return restaurant;

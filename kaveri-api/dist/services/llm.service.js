@@ -2,10 +2,35 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.queryLLM = queryLLM;
 const groq_1 = require("../config/groq");
+function buildFallbackResponse(message, systemPrompt) {
+    const normalized = message.toLowerCase();
+    if (/reserve|booking|table|reservation|book/i.test(normalized)) {
+        return 'I can help with reservations. Please share your preferred date, time, and party size.';
+    }
+    if (/price|cost|cheap|expensive|under\s*₹|₹|rupees|budget/i.test(normalized)) {
+        return 'I can help compare menu prices. Please mention the dish you want to check.';
+    }
+    if (/where|location|address|hours|timing|open|close|restaurant|located/i.test(normalized)) {
+        return 'I can share restaurant details such as location, timings, and contact info.';
+    }
+    return `I can help with menu suggestions and restaurant information. ${systemPrompt ? 'Use the provided context for best results.' : ''}`.trim();
+}
 async function queryLLM(request) {
+    const systemPrompt = request.systemPrompt || 'You are a helpful assistant.';
     try {
-        const systemPrompt = request.systemPrompt || 'You are a helpful assistant.';
-        const message = await groq_1.groqClient.chat.completions.create({
+        if (!process.env.GROQ_API_KEY) {
+            return {
+                content: buildFallbackResponse(request.message, systemPrompt),
+                model: groq_1.groqModel,
+                tokens_used: {
+                    prompt_tokens: 0,
+                    completion_tokens: 0,
+                    total_tokens: 0,
+                },
+            };
+        }
+        const groqClient = (0, groq_1.getGroqClient)();
+        const message = await groqClient.chat.completions.create({
             messages: [
                 {
                     role: 'system',
@@ -32,6 +57,14 @@ async function queryLLM(request) {
         };
     }
     catch (error) {
-        throw new Error(`LLM Query failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        return {
+            content: buildFallbackResponse(request.message, systemPrompt),
+            model: groq_1.groqModel,
+            tokens_used: {
+                prompt_tokens: 0,
+                completion_tokens: 0,
+                total_tokens: 0,
+            },
+        };
     }
 }
