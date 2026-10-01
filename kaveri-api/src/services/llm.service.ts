@@ -25,6 +25,7 @@ export interface LLMQueryRequest {
 export interface LLMQueryResponse {
     content: string;
     model: string;
+    fallback?: boolean;
     tokens_used?: {
         prompt_tokens: number;
         completion_tokens: number;
@@ -34,12 +35,14 @@ export interface LLMQueryResponse {
 
 export async function queryLLM(request: LLMQueryRequest): Promise<LLMQueryResponse> {
     const systemPrompt = request.systemPrompt || 'You are a helpful assistant.';
+    const groqApiKey = process.env.GROQ_API_KEY?.trim();
 
     try {
-        if (!process.env.GROQ_API_KEY) {
+        if (!groqApiKey || groqApiKey === 'your_groq_api_key_here') {
             return {
                 content: buildFallbackResponse(request.message, systemPrompt),
                 model: groqModel,
+                fallback: true,
                 tokens_used: {
                     prompt_tokens: 0,
                     completion_tokens: 0,
@@ -70,6 +73,7 @@ export async function queryLLM(request: LLMQueryRequest): Promise<LLMQueryRespon
         return {
             content,
             model: groqModel,
+            fallback: false,
             tokens_used: {
                 prompt_tokens: message.usage?.prompt_tokens || 0,
                 completion_tokens: message.usage?.completion_tokens || 0,
@@ -80,6 +84,7 @@ export async function queryLLM(request: LLMQueryRequest): Promise<LLMQueryRespon
         return {
             content: buildFallbackResponse(request.message, systemPrompt),
             model: groqModel,
+            fallback: true,
             tokens_used: {
                 prompt_tokens: 0,
                 completion_tokens: 0,

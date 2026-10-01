@@ -17,11 +17,13 @@ function buildFallbackResponse(message, systemPrompt) {
 }
 async function queryLLM(request) {
     const systemPrompt = request.systemPrompt || 'You are a helpful assistant.';
+    const groqApiKey = process.env.GROQ_API_KEY?.trim();
     try {
-        if (!process.env.GROQ_API_KEY) {
+        if (!groqApiKey || groqApiKey === 'your_groq_api_key_here') {
             return {
                 content: buildFallbackResponse(request.message, systemPrompt),
                 model: groq_1.groqModel,
+                fallback: true,
                 tokens_used: {
                     prompt_tokens: 0,
                     completion_tokens: 0,
@@ -49,6 +51,7 @@ async function queryLLM(request) {
         return {
             content,
             model: groq_1.groqModel,
+            fallback: false,
             tokens_used: {
                 prompt_tokens: message.usage?.prompt_tokens || 0,
                 completion_tokens: message.usage?.completion_tokens || 0,
@@ -60,6 +63,7 @@ async function queryLLM(request) {
         return {
             content: buildFallbackResponse(request.message, systemPrompt),
             model: groq_1.groqModel,
+            fallback: true,
             tokens_used: {
                 prompt_tokens: 0,
                 completion_tokens: 0,

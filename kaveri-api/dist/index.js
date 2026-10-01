@@ -12,6 +12,7 @@ const mongodb_1 = require("./config/mongodb");
 const restaurant_routes_1 = __importDefault(require("./routes/restaurant.routes"));
 const restaurant_profile_routes_1 = __importDefault(require("./routes/restaurant-profile.routes"));
 const booking_routes_1 = __importDefault(require("./routes/booking.routes"));
+const table_routes_1 = __importDefault(require("./routes/table.routes"));
 const chat_routes_1 = __importDefault(require("./routes/chat.routes"));
 const seed_1 = require("./scripts/seed");
 const app = (0, express_1.default)();
@@ -79,6 +80,7 @@ app.use('/chat', chat_routes_1.default);
 app.use('/api/restaurants', restaurant_routes_1.default);
 app.use('/api/restaurant-profiles', restaurant_profile_routes_1.default);
 app.use('/api/bookings', booking_routes_1.default);
+app.use('/api/tables', table_routes_1.default);
 /**
  * Global Error Handler
  */

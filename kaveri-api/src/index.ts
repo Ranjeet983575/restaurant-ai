@@ -8,6 +8,7 @@ import { connectDB } from './config/mongodb';
 import restaurantRoutes from './routes/restaurant.routes';
 import restaurantProfileRoutes from './routes/restaurant-profile.routes';
 import bookingRoutes from './routes/booking.routes';
+import tableRoutes from './routes/table.routes';
 import chatRoutes from './routes/chat.routes';
 import { seedKaveriData } from './scripts/seed';
 
@@ -89,6 +90,7 @@ app.use('/chat', chatRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/restaurant-profiles', restaurantProfileRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/tables', tableRoutes);
 
 /**
  * Global Error Handler

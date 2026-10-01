@@ -64,7 +64,11 @@ async function generateMenuEmbedding(menuItem) {
             section: ${menuItem.section || 'general'}
             category: ${menuItem.category || 'general'}
             vegetarian: ${menuItem.vegetarian ? 'vegetarian' : 'non vegetarian'}
+            vegan: ${menuItem.vegan ? 'vegan' : 'not vegan'}
             spicy level: ${menuItem.spicy_level || 'mild'}
+            ingredients: ${(menuItem.ingredients || []).join(', ')}
+            allergens: ${(menuItem.allergens || []).join(', ')}
+            chef recommendation: ${menuItem.chef_recommendation ? 'yes' : 'no'}
             tags: ${(menuItem.tags || []).join(', ')}
         `.trim();
         return generateEmbedding(text);

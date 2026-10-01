@@ -20,6 +20,9 @@ const router = Router();
  *               query:
  *                 type: string
  *                 description: Main chat or search query. This is the preferred field.
+ *               conversationId:
+ *                 type: string
+ *                 description: Optional stable ID used to persist conversation history and state in MongoDB.
  *               messages:
  *                 type: array
  *                 description: Optional legacy chat history payload. If provided without query, the last message text is used.

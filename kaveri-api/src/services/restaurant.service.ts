@@ -6,12 +6,20 @@ export interface CreateMenuInput {
     name: string;
     description: string;
     price: number;
-    section: 'main_course' | 'freshment' | 'drink' | 'dessert' | 'starter' | 'appetizer';
+    section: string;
     category: string;
     vegetarian?: boolean;
+    vegan?: boolean;
+    currency?: string;
     spicy_level?: 'mild' | 'medium' | 'spicy' | 'very_spicy';
+    ingredients?: string[];
+    allergens?: string[];
+    calories?: number;
     is_available?: boolean;
+    popularity?: number;
+    chef_recommendation?: boolean;
     preparation_time?: number;
+    image?: string;
     tags?: string[];
 }
 
@@ -21,6 +29,12 @@ export interface CreateRestaurantInput {
     description: string;
     location: string;
     address: string;
+    city?: string;
+    country?: string;
+    email?: string;
+    website?: string;
+    latitude?: number;
+    longitude?: number;
     phone: string;
     price_range: 'budget' | 'moderate' | 'expensive' | 'luxury';
     rating?: number;
@@ -29,12 +43,31 @@ export interface CreateRestaurantInput {
         saturday?: string;
         sunday?: string;
     };
+    weekly_schedule?: Record<string, string>;
+    opening_hours?: string;
+    closing_hours?: string;
+    features?: string[];
+    parking_information?: string;
+    accessibility_information?: string;
+    dress_code?: string;
+    reservation_policy?: string;
+    cancellation_policy?: string;
     tags?: string[];
     menus?: CreateMenuInput[];
 }
 
 export interface UpdateRestaurantInput extends Partial<CreateRestaurantInput> { }
 export interface UpdateMenuInput extends Partial<CreateMenuInput> { }
+
+export interface MenuCatalogFilter {
+    category?: string;
+    vegetarian?: boolean;
+    vegan?: boolean;
+    spicy_level?: string;
+    min_price?: number;
+    max_price?: number;
+    available_only?: boolean;
+}
 
 export interface RestaurantSearchResult {
     restaurant: IRestaurant;
@@ -58,9 +91,17 @@ export interface MenuSearchItem {
         section: string;
         category: string;
         vegetarian?: boolean;
+        vegan?: boolean;
+        currency?: string;
         spicy_level?: 'mild' | 'medium' | 'spicy' | 'very_spicy';
+        ingredients?: string[];
+        allergens?: string[];
+        calories?: number;
         is_available?: boolean;
+        popularity?: number;
+        chef_recommendation?: boolean;
         preparation_time?: number;
+        image?: string;
         tags?: string[];
     };
     restaurant: {
@@ -96,9 +137,17 @@ function sanitizeMenuSearchResult(result: MenuSearchResult): MenuSearchItem {
             section: result.menu.section,
             category: result.menu.category,
             vegetarian: result.menu.vegetarian,
+            vegan: result.menu.vegan,
+            currency: result.menu.currency,
             spicy_level: result.menu.spicy_level,
+            ingredients: result.menu.ingredients,
+            allergens: result.menu.allergens,
+            calories: result.menu.calories,
             is_available: result.menu.is_available,
+            popularity: result.menu.popularity,
+            chef_recommendation: result.menu.chef_recommendation,
             preparation_time: result.menu.preparation_time,
+            image: result.menu.image,
             tags: result.menu.tags,
         },
         restaurant: {
@@ -146,7 +195,11 @@ async function ensureMenuEmbedding(menu: IMenu): Promise<void> {
                 section: menu.section,
                 category: menu.category,
                 vegetarian: menu.vegetarian,
+                vegan: menu.vegan,
                 spicy_level: menu.spicy_level,
+                ingredients: menu.ingredients,
+                allergens: menu.allergens,
+                chef_recommendation: menu.chef_recommendation,
                 tags: menu.tags,
             });
             await menu.save();
@@ -295,9 +348,22 @@ export async function getMenuItemsByRestaurant(restaurantId: string): Promise<IM
     }
 }
 
-export async function getAllMenuItems(): Promise<IMenu[]> {
+export async function getAllMenuItems(filter: MenuCatalogFilter = {}): Promise<IMenu[]> {
     try {
-        return await Menu.find().sort({ createdAt: -1 });
+        const query: Record<string, unknown> = {};
+        if (filter.category) query.category = filter.category;
+        if (typeof filter.vegetarian === 'boolean') query.vegetarian = filter.vegetarian;
+        if (typeof filter.vegan === 'boolean') query.vegan = filter.vegan;
+        if (filter.spicy_level) query.spicy_level = filter.spicy_level;
+        if (typeof filter.available_only === 'boolean') query.is_available = filter.available_only;
+        if (typeof filter.min_price === 'number' || typeof filter.max_price === 'number') {
+            query.price = {
+                ...(typeof filter.min_price === 'number' ? { $gte: filter.min_price } : {}),
+                ...(typeof filter.max_price === 'number' ? { $lte: filter.max_price } : {}),
+            };
+        }
+
+        return await Menu.find(query).sort({ chef_recommendation: -1, popularity: -1, createdAt: -1 });
     } catch (error) {
         throw new Error(`Failed to fetch all menu items: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

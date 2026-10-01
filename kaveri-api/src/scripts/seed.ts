@@ -4,6 +4,8 @@ import { Restaurant } from '../models/restaurant.model';
 import { Menu } from '../models/menu.model';
 import { RestaurantProfile } from '../models/restaurant-profile.model';
 import { BookingSlot } from '../models/booking-slot.model';
+import { Table } from '../models/table.model';
+import { Booking } from '../models/booking.model';
 import { bulkCreateRestaurants, CreateRestaurantInput } from '../services/restaurant.service';
 
 interface SeedProfileInput {
@@ -59,9 +61,18 @@ export async function seedKaveriData(): Promise<{ inserted: number; skipped: boo
     }
 
     const existingCount = await Restaurant.countDocuments();
-    if (existingCount > 0) {
+    const existingRelatedData = await Promise.all([
+        Booking.countDocuments(),
+        BookingSlot.countDocuments(),
+        Table.countDocuments(),
+        RestaurantProfile.countDocuments(),
+        Menu.countDocuments(),
+    ]);
+    if (existingCount > 0 || existingRelatedData.some(count => count > 0)) {
         console.log(`Resetting existing seed data before re-importing ${existingCount} restaurant document(s)...`);
+        await Booking.deleteMany({}).catch(() => undefined);
         await BookingSlot.deleteMany({}).catch(() => undefined);
+        await Table.deleteMany({}).catch(() => undefined);
         await RestaurantProfile.deleteMany({}).catch(() => undefined);
         await Menu.deleteMany({}).catch(() => undefined);
         await Restaurant.deleteMany({}).catch(() => undefined);
@@ -88,8 +99,33 @@ export async function seedKaveriData(): Promise<{ inserted: number; skipped: boo
     const seedSlots = payload.bookingSlots || [];
     let seededProfileCount = 0;
     let seededSlotCount = 0;
+    let seededTableCount = 0;
 
     for (const restaurant of created) {
+        restaurant.city = restaurant.city || restaurant.location;
+        restaurant.country = restaurant.country || 'India';
+        restaurant.features = restaurant.features?.length > 0
+            ? restaurant.features
+            : ['family-friendly', 'dine-in', 'takeaway', 'private dining'];
+        restaurant.parking_information = restaurant.parking_information || 'Street parking and nearby paid parking available.';
+        restaurant.accessibility_information = restaurant.accessibility_information || 'Step-free entrance and accessible seating available.';
+        restaurant.dress_code = restaurant.dress_code || 'Smart casual';
+        restaurant.reservation_policy = restaurant.reservation_policy || 'Reservations are recommended for dinner and groups of six or more.';
+        restaurant.cancellation_policy = restaurant.cancellation_policy || 'Please cancel at least two hours before your reservation.';
+        await restaurant.save();
+
+        const menuItems = await Menu.find({ restaurantId: restaurant._id });
+        for (const menuItem of menuItems) {
+            const tags = menuItem.tags || [];
+            menuItem.currency = menuItem.currency || 'INR';
+            menuItem.ingredients = menuItem.ingredients || [];
+            menuItem.allergens = menuItem.allergens || [];
+            menuItem.vegan = menuItem.vegan ?? false;
+            menuItem.popularity = menuItem.popularity || (tags.some(tag => ['popular', 'favorite', 'signature'].includes(tag)) ? 4.5 : 3.5);
+            menuItem.chef_recommendation = menuItem.chef_recommendation || tags.some(tag => ['signature', 'favorite'].includes(tag));
+            await menuItem.save();
+        }
+
         const matchedProfile = seedProfiles.find(profile => profile.name === restaurant.name);
         const profilePayload = {
             restaurantId: restaurant._id,
@@ -161,9 +197,26 @@ export async function seedKaveriData(): Promise<{ inserted: number; skipped: boo
             await BookingSlot.insertMany(slotDocuments);
             seededSlotCount += slotDocuments.length;
         }
+
+        const tableDocuments = [
+            { tableNumber: '1', capacity: 2, area: 'window', tableType: '2-person table', features: ['window'] },
+            { tableNumber: '2', capacity: 4, area: 'indoor', tableType: '4-person table', features: [] },
+            { tableNumber: '3', capacity: 4, area: 'outdoor', tableType: '4-person table', features: ['outdoor'] },
+            { tableNumber: '4', capacity: 6, area: 'indoor', tableType: '6-person table', features: ['high-chair available'] },
+            { tableNumber: '5', capacity: 8, area: 'private_room', tableType: 'private dining table', features: ['private room'] },
+        ];
+
+        await Table.deleteMany({ restaurantId: restaurant._id });
+        await Table.insertMany(tableDocuments.map(table => ({
+            ...table,
+            restaurantId: restaurant._id,
+            restaurantName: restaurant.name,
+            status: 'available',
+        })));
+        seededTableCount += tableDocuments.length;
     }
 
     const menuCount = await Menu.countDocuments();
-    console.log(`Seed complete: inserted ${created.length} restaurant(s), ${menuCount} menu item(s), ${seededProfileCount} profile(s), and ${seededSlotCount} booking slot(s).`);
+    console.log(`Seed complete: inserted ${created.length} restaurant(s), ${menuCount} menu item(s), ${seededProfileCount} profile(s), ${seededSlotCount} booking slot(s), and ${seededTableCount} table(s).`);
     return { inserted: created.length, skipped: false };
 }

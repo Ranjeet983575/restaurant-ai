@@ -16,6 +16,7 @@ import {
     filterRestaurants,
     CreateRestaurantInput,
     CreateMenuInput,
+    MenuCatalogFilter,
 } from '../services/restaurant.service';
 
 const router = Router();
@@ -212,9 +213,22 @@ router.get('/filter', async (req: Request<{}, {}, {}, { cuisine?: string; locati
  *       200:
  *         description: List of all menu items
  */
-router.get('/menus', async (_req: Request, res: Response) => {
+router.get('/menus', async (req: Request<{}, {}, {}, MenuCatalogFilter>, res: Response) => {
     try {
-        const menus = await getAllMenuItems();
+        const booleanQuery = (value?: string): boolean | undefined => {
+            if (value === 'true') return true;
+            if (value === 'false') return false;
+            return undefined;
+        };
+        const menus = await getAllMenuItems({
+            category: req.query.category,
+            vegetarian: booleanQuery(req.query.vegetarian as unknown as string),
+            vegan: booleanQuery(req.query.vegan as unknown as string),
+            spicy_level: req.query.spicy_level,
+            min_price: req.query.min_price ? Number(req.query.min_price) : undefined,
+            max_price: req.query.max_price ? Number(req.query.max_price) : undefined,
+            available_only: booleanQuery(req.query.available_only as unknown as string),
+        });
         res.json({ success: true, data: menus });
     } catch (error) {
         res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Server error' });

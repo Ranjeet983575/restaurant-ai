@@ -63,7 +63,6 @@ const menuSchema = new mongoose_1.Schema({
     },
     section: {
         type: String,
-        enum: ['main_course', 'freshment', 'drink', 'dessert', 'starter', 'appetizer'],
         required: true,
         index: true,
     },
@@ -76,19 +75,27 @@ const menuSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
+    vegan: { type: Boolean, default: false, index: true },
+    currency: { type: String, default: 'INR' },
     spicy_level: {
         type: String,
         enum: ['mild', 'medium', 'spicy', 'very_spicy'],
         default: 'medium',
     },
+    ingredients: { type: [String], default: [] },
+    allergens: { type: [String], default: [] },
+    calories: { type: Number, min: 0 },
     is_available: {
         type: Boolean,
         default: true,
     },
+    popularity: { type: Number, min: 0, max: 5, default: 0, index: true },
+    chef_recommendation: { type: Boolean, default: false, index: true },
     preparation_time: {
         type: Number,
         min: 0,
     },
+    image: { type: String, default: '' },
     tags: {
         type: [String],
         default: [],

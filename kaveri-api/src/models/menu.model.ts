@@ -7,12 +7,20 @@ export interface IMenu extends Document {
     name: string;
     description: string;
     price: number;
-    section: 'main_course' | 'freshment' | 'drink' | 'dessert' | 'starter' | 'appetizer';
+    section: string;
     category: string;
     vegetarian: boolean;
+    vegan: boolean;
+    currency: string;
     spicy_level: 'mild' | 'medium' | 'spicy' | 'very_spicy';
+    ingredients: string[];
+    allergens: string[];
+    calories?: number;
     is_available: boolean;
+    popularity: number;
+    chef_recommendation: boolean;
     preparation_time?: number;
+    image?: string;
     tags: string[];
     vector_embedding: number[];
     createdAt: Date;
@@ -48,7 +56,6 @@ const menuSchema = new Schema<IMenu>(
         },
         section: {
             type: String,
-            enum: ['main_course', 'freshment', 'drink', 'dessert', 'starter', 'appetizer'],
             required: true,
             index: true,
         },
@@ -61,19 +68,27 @@ const menuSchema = new Schema<IMenu>(
             type: Boolean,
             default: false,
         },
+        vegan: { type: Boolean, default: false, index: true },
+        currency: { type: String, default: 'INR' },
         spicy_level: {
             type: String,
             enum: ['mild', 'medium', 'spicy', 'very_spicy'],
             default: 'medium',
         },
+        ingredients: { type: [String], default: [] },
+        allergens: { type: [String], default: [] },
+        calories: { type: Number, min: 0 },
         is_available: {
             type: Boolean,
             default: true,
         },
+        popularity: { type: Number, min: 0, max: 5, default: 0, index: true },
+        chef_recommendation: { type: Boolean, default: false, index: true },
         preparation_time: {
             type: Number,
             min: 0,
         },
+        image: { type: String, default: '' },
         tags: {
             type: [String],
             default: [],

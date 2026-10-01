@@ -2,6 +2,10 @@
 
 A TypeScript-based backend for the Kaveri restaurant experience with MongoDB storage, semantic search, and rich menu management. It uses vector embeddings so users can search food items and restaurants using natural language.
 
+## Product Prompt
+
+The complete product requirements and implementation direction are maintained in the [Kaveri AI Master Development Prompt](prompt.md). Keep that document and this README together: the prompt describes the product goals, while this README describes the current runnable implementation.
+
 ## Features
 
 - **Restaurant CRUD API** - Create, read, update, and delete restaurants
@@ -9,6 +13,9 @@ A TypeScript-based backend for the Kaveri restaurant experience with MongoDB sto
 - **Bulk Insert** - Seed multiple restaurants with full menu data in one request
 - **Semantic Search** - Search restaurants and dishes using natural language
 - **Vector Embeddings** - Each restaurant stores a semantic embedding for similarity search
+- **Restaurant Concierge Chat** - MongoDB-backed conversation state with intent and tool metadata
+- **Table Availability** - Table-aware availability checks and reservation-safe booking fields
+- **Automatic Seeding** - Restaurants, menus, profiles, booking slots, and tables are seeded at startup
 - **Swagger UI** - Interactive API documentation
 
 ## Data Model
@@ -25,6 +32,9 @@ A TypeScript-based backend for the Kaveri restaurant experience with MongoDB sto
 - `tags` - Array of tags
 - `menus` - Array of menu items
 - `working_hours` - Business hours for each day
+- `city`, `country`, `email`, `website`, `latitude`, `longitude`
+- `features`, `parking_information`, `accessibility_information`
+- `dress_code`, `reservation_policy`, `cancellation_policy`
 - `vector_embedding` - Auto-generated semantic embedding
 
 ### Menu Item Fields
@@ -34,9 +44,14 @@ A TypeScript-based backend for the Kaveri restaurant experience with MongoDB sto
 - `section` - appetizer | main_course | freshment | drink | dessert | starter | appetizer
 - `category` - Street Food | Curries | Biryanis | Breads | Rice | Desserts | Cool Drinks | etc.
 - `vegetarian` - true/false
+- `vegan` - true/false
+- `currency` - Currency code, default `INR`
 - `spicy_level` - mild | medium | spicy | very_spicy
+- `ingredients` and `allergens` - Structured dietary information
 - `is_available` - true/false
+- `popularity` and `chef_recommendation`
 - `preparation_time` - Estimated prep time in minutes
+- `calories` and `image` when available
 - `tags` - Additional searchable tags
 
 ## Setup
@@ -68,6 +83,16 @@ npm run dev
 
 Server runs at `http://localhost:3000`
 Swagger UI at `http://localhost:3000/api-docs`
+
+### Chat API
+
+```bash
+curl -X POST http://localhost:3000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"conversationId":"demo-1","query":"Show me vegetarian dishes"}'
+```
+
+The response includes `reply`, `intent`, `toolCalls`, and persisted `conversationState`. Conversation history is stored in MongoDB when `conversationId` is supplied.
 
 ## Sample Data - Kaveri Restaurant
 
@@ -132,6 +157,18 @@ curl -X POST http://localhost:3000/api/restaurants/search \
 #### Filter Restaurants
 ```bash
 curl "http://localhost:3000/api/restaurants/filter?cuisine=Indian&location=Hyderabad&price_range=moderate&min_rating=4.5"
+```
+
+#### Filter Menu Items
+
+```bash
+curl "http://localhost:3000/api/restaurants/menus?vegetarian=true&available_only=true&max_price=350"
+```
+
+#### Check Table Availability
+
+```bash
+curl "http://localhost:3000/api/tables/availability?restaurantId={id}&bookingDate=2026-10-02&startTime=19:00&partySize=4"
 ```
 
 #### CRUD
@@ -218,12 +255,24 @@ src/
 │   ├── mongodb.ts       - MongoDB connection
 │   └── swagger.ts       - Swagger/OpenAPI documentation
 ├── models/
-│   └── restaurant.model.ts - Restaurant & Menu schemas
+│   ├── restaurant.model.ts - Restaurant schema
+│   ├── menu.model.ts       - Menu schema
+│   ├── table.model.ts      - Seating schema
+│   └── conversation.model.ts - Chat history and state
 ├── services/
-│   ├── embedding.service.ts      - Sentence Transformer embeddings
-│   └── restaurant.service.ts     - Restaurant CRUD & semantic search
+│   ├── embedding.service.ts - Sentence Transformer embeddings
+│   ├── restaurant.service.ts - Restaurant CRUD, filters, and semantic search
+│   ├── booking.service.ts - Profiles, slots, availability, and bookings
+│   └── chat.service.ts - Conversation orchestration
+├── tools/
+│   ├── restaurant-info.tool.ts
+│   ├── menu-search.tool.ts
+│   ├── availability.tool.ts
+│   └── reservation.tool.ts
 ├── routes/
-│   └── restaurant.routes.ts      - Restaurant and menu endpoints
+│   ├── restaurant.routes.ts - Restaurant and menu endpoints
+│   ├── table.routes.ts - Table availability endpoint
+│   └── chat.routes.ts - Concierge chat endpoint
 ├── scripts/
 │   └── seed.ts                   - Automatic sample data seeding
 ├── index.ts                      - Main server file

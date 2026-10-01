@@ -31,9 +31,17 @@ function sanitizeMenuSearchResult(result) {
             section: result.menu.section,
             category: result.menu.category,
             vegetarian: result.menu.vegetarian,
+            vegan: result.menu.vegan,
+            currency: result.menu.currency,
             spicy_level: result.menu.spicy_level,
+            ingredients: result.menu.ingredients,
+            allergens: result.menu.allergens,
+            calories: result.menu.calories,
             is_available: result.menu.is_available,
+            popularity: result.menu.popularity,
+            chef_recommendation: result.menu.chef_recommendation,
             preparation_time: result.menu.preparation_time,
+            image: result.menu.image,
             tags: result.menu.tags,
         },
         restaurant: {
@@ -80,7 +88,11 @@ async function ensureMenuEmbedding(menu) {
                 section: menu.section,
                 category: menu.category,
                 vegetarian: menu.vegetarian,
+                vegan: menu.vegan,
                 spicy_level: menu.spicy_level,
+                ingredients: menu.ingredients,
+                allergens: menu.allergens,
+                chef_recommendation: menu.chef_recommendation,
                 tags: menu.tags,
             });
             await menu.save();
@@ -218,9 +230,26 @@ async function getMenuItemsByRestaurant(restaurantId) {
         throw new Error(`Failed to fetch menu items: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }
-async function getAllMenuItems() {
+async function getAllMenuItems(filter = {}) {
     try {
-        return await menu_model_1.Menu.find().sort({ createdAt: -1 });
+        const query = {};
+        if (filter.category)
+            query.category = filter.category;
+        if (typeof filter.vegetarian === 'boolean')
+            query.vegetarian = filter.vegetarian;
+        if (typeof filter.vegan === 'boolean')
+            query.vegan = filter.vegan;
+        if (filter.spicy_level)
+            query.spicy_level = filter.spicy_level;
+        if (typeof filter.available_only === 'boolean')
+            query.is_available = filter.available_only;
+        if (typeof filter.min_price === 'number' || typeof filter.max_price === 'number') {
+            query.price = {
+                ...(typeof filter.min_price === 'number' ? { $gte: filter.min_price } : {}),
+                ...(typeof filter.max_price === 'number' ? { $lte: filter.max_price } : {}),
+            };
+        }
+        return await menu_model_1.Menu.find(query).sort({ chef_recommendation: -1, popularity: -1, createdAt: -1 });
     }
     catch (error) {
         throw new Error(`Failed to fetch all menu items: ${error instanceof Error ? error.message : 'Unknown error'}`);

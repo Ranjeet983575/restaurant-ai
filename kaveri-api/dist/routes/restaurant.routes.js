@@ -190,9 +190,24 @@ router.get('/filter', async (req, res) => {
  *       200:
  *         description: List of all menu items
  */
-router.get('/menus', async (_req, res) => {
+router.get('/menus', async (req, res) => {
     try {
-        const menus = await (0, restaurant_service_1.getAllMenuItems)();
+        const booleanQuery = (value) => {
+            if (value === 'true')
+                return true;
+            if (value === 'false')
+                return false;
+            return undefined;
+        };
+        const menus = await (0, restaurant_service_1.getAllMenuItems)({
+            category: req.query.category,
+            vegetarian: booleanQuery(req.query.vegetarian),
+            vegan: booleanQuery(req.query.vegan),
+            spicy_level: req.query.spicy_level,
+            min_price: req.query.min_price ? Number(req.query.min_price) : undefined,
+            max_price: req.query.max_price ? Number(req.query.max_price) : undefined,
+            available_only: booleanQuery(req.query.available_only),
+        });
         res.json({ success: true, data: menus });
     }
     catch (error) {

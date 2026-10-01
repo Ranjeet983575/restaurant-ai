@@ -7,6 +7,12 @@ export interface IRestaurant extends Document {
     description: string;
     location: string;
     address: string;
+    city?: string;
+    country?: string;
+    email?: string;
+    website?: string;
+    latitude?: number;
+    longitude?: number;
     phone: string;
     price_range: 'budget' | 'moderate' | 'expensive' | 'luxury';
     rating: number;
@@ -15,6 +21,15 @@ export interface IRestaurant extends Document {
         saturday: string;
         sunday: string;
     };
+    weekly_schedule?: Record<string, string>;
+    opening_hours?: string;
+    closing_hours?: string;
+    features: string[];
+    parking_information?: string;
+    accessibility_information?: string;
+    dress_code?: string;
+    reservation_policy?: string;
+    cancellation_policy?: string;
     tags: string[];
     vector_embedding: number[];
     createdAt: Date;
@@ -46,6 +61,12 @@ const restaurantSchema = new Schema<IRestaurant>(
             type: String,
             required: true,
         },
+        city: { type: String, default: '' },
+        country: { type: String, default: 'India' },
+        email: { type: String, default: '' },
+        website: { type: String, default: '' },
+        latitude: { type: Number, min: -90, max: 90 },
+        longitude: { type: Number, min: -180, max: 180 },
         phone: {
             type: String,
             required: true,
@@ -75,6 +96,15 @@ const restaurantSchema = new Schema<IRestaurant>(
                 default: '12:00 PM - 10:00 PM',
             },
         },
+        weekly_schedule: { type: Schema.Types.Mixed, default: {} },
+        opening_hours: { type: String, default: '' },
+        closing_hours: { type: String, default: '' },
+        features: { type: [String], default: [] },
+        parking_information: { type: String, default: '' },
+        accessibility_information: { type: String, default: '' },
+        dress_code: { type: String, default: '' },
+        reservation_policy: { type: String, default: '' },
+        cancellation_policy: { type: String, default: '' },
         tags: {
             type: [String],
             default: [],
