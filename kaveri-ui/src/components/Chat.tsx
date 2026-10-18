@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import React, { FormEvent, useEffect, useRef, useState } from 'react'
 import { callChatApi, callConversationApi, callMenuApi, callRestaurantApi, ChatResponse, MenuItem, Restaurant } from '../services/api'
 
 type Message = {
@@ -40,16 +40,21 @@ function MenuCard({ item }: { item: MenuItem }) {
 }
 
 export default function Chat() {
-    const conversationId = useMemo(getConversationId, [])
+    const [conversationId, setConversationId] = useState(getConversationId)
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
+    const [chatEnded, setChatEnded] = useState(() =>
+        window.localStorage.getItem(`kaveri-chat-ended:${window.localStorage.getItem('kaveri-conversation-id')}`) === 'true'
+    )
     const [restoringHistory, setRestoringHistory] = useState(true)
     const [historyError, setHistoryError] = useState(false)
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
     const [menu, setMenu] = useState<MenuItem[]>([])
     const [dataError, setDataError] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
+    const wasLoading = useRef(false)
 
     useEffect(() => {
         Promise.all([callRestaurantApi(), callMenuApi()])
@@ -87,10 +92,17 @@ export default function Chat() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages, loading])
 
+    useEffect(() => {
+        if (wasLoading.current && !loading && !chatEnded && !restoringHistory) {
+            inputRef.current?.focus()
+        }
+        wasLoading.current = loading
+    }, [loading, chatEnded, restoringHistory])
+
     async function sendMessage(event: FormEvent, value = input) {
         event.preventDefault()
         const text = value.trim()
-        if (!text || loading || restoringHistory) return
+        if (!text || loading || restoringHistory || chatEnded) return
 
         const userMessage: Message = { role: 'user', text, createdAt: new Date() }
         const history = [...messages, userMessage]
@@ -109,6 +121,23 @@ export default function Chat() {
         }
     }
 
+    function endChat() {
+        if (loading || restoringHistory) return
+        window.localStorage.setItem(`kaveri-chat-ended:${conversationId}`, 'true')
+        setChatEnded(true)
+    }
+
+    function startNewChat() {
+        const newConversationId = crypto.randomUUID()
+        window.localStorage.setItem('kaveri-conversation-id', newConversationId)
+        setConversationId(newConversationId)
+        setMessages([])
+        setInput('')
+        setHistoryError(false)
+        setRestoringHistory(true)
+        setChatEnded(false)
+    }
+
     return <div className="app-shell">
         <aside className="brand-rail">
             <div><div className="brand-mark">K</div><p className="brand-name">Kaveri</p><p className="brand-caption">Restaurant concierge</p></div>
@@ -124,21 +153,27 @@ export default function Chat() {
             <header className="chat-header"><div className="assistant-avatar">K</div><div><p className="eyebrow">Your dining guide</p><h1>Kaveri Concierge</h1></div><div className="online-pill"><span className="status-dot" /> Online</div></header>
             {historyError && <p className="muted" role="alert">Previous messages could not be loaded. Your new messages can still be sent.</p>}
             <section className="conversation" aria-live="polite">
-                {restoringHistory ? <div className="welcome-panel"><p className="eyebrow">Restoring conversation</p></div> : messages.length === 0 ? <div className="welcome-panel"><p className="eyebrow">Welcome to Kaveri</p><h2>Let’s find your<br /><em>next favourite.</em></h2><p className="welcome-copy">Ask about our menu, discover a dish, or let us arrange your table.</p><div className="prompt-grid">{prompts.map(prompt => <button key={prompt.icon} onClick={event => sendMessage(event, prompt.value)}><span>{prompt.icon}</span>{prompt.label}<b>↗</b></button>)}</div></div> : messages.map((message, index) => <div className={`message-row ${message.role}`} key={`${message.createdAt.toISOString()}-${index}`}>
+                {restoringHistory ? <div className="welcome-panel"><p className="eyebrow">Restoring conversation</p></div> : messages.length === 0 ? <div className="welcome-panel"><p className="eyebrow">Welcome to Kaveri</p><h2>Let’s find your<br /><em>next favourite.</em></h2><p className="welcome-copy">Ask about our menu, discover a dish, or let us arrange your table.</p><div className="prompt-grid">{prompts.map(prompt => <button key={prompt.icon} onClick={event => sendMessage(event, prompt.value)} disabled={chatEnded || loading || restoringHistory}><span>{prompt.icon}</span>{prompt.label}<b>↗</b></button>)}</div></div> : messages.map((message, index) => <div className={`message-row ${message.role}`} key={`${message.createdAt.toISOString()}-${index}`}>
                     {message.role === 'assistant' && <div className="message-avatar">K</div>}
                     <div className="message-wrap"><div className="message-bubble">{message.text}</div>{message.toolCalls && message.toolCalls.length > 0 && <small className="tool-trace">Agent actions: {message.toolCalls.map(tool => `${tool.tool} · ${tool.status}`).join(' / ')}</small>}{message.fallback && <small className="fallback-note">Limited response mode: the AI service is unavailable.</small>}{message.tables && message.tables.length > 0 && <div className="availability-card"><p className="eyebrow">Available tables</p>{message.tables.map(table => <div className="table-option" key={table.tableId}><span>{table.tableNumber}</span><strong>Table for {table.capacity}</strong><small>{table.area.replace('_', ' ')}</small></div>)}</div>}<time>{formatTime(message.createdAt)}</time></div>
                 </div>)}
                 {loading && <div className="message-row assistant"><div className="message-avatar">K</div><div className="typing" aria-label="Kaveri AI is thinking"><i /><i /><i /></div></div>}
                 <div ref={messagesEndRef} />
             </section>
-            <form className="composer" onSubmit={sendMessage}><input aria-label="Message Kaveri" value={input} onChange={event => setInput(event.target.value)} placeholder="Ask Kaveri anything..." disabled={loading || restoringHistory} /><button type="submit" aria-label="Send message" disabled={loading || restoringHistory || !input.trim()}>↗</button></form>
-            <p className="composer-note">Kaveri uses the restaurant’s live menu and availability.</p>
+            {!chatEnded ? <>
+                <form className="composer" onSubmit={sendMessage}><input ref={inputRef} aria-label="Message Kaveri" value={input} onChange={event => setInput(event.target.value)} placeholder="Ask Kaveri anything..." disabled={loading || restoringHistory} /><button type="submit" aria-label="Send message" disabled={loading || restoringHistory || !input.trim()}>↗</button></form>
+                <p className="composer-note">Kaveri uses the restaurant’s live menu and availability.</p>
+                <div className="chat-actions"><button type="button" className="end-chat-button" onClick={endChat} disabled={loading || restoringHistory}>End chat</button></div>
+            </> : <div className="ended-chat-panel" role="status">
+                <p>This chat has ended. Your conversation is saved.</p>
+                <button type="button" className="new-chat-button" onClick={startNewChat}>Start new chat</button>
+            </div>}
         </main>
 
         <aside className="context-panel">
             <div className="context-section restaurant-summary"><div className="section-heading"><span className="eyebrow">Tonight at</span><span className="rating">★ {restaurant?.rating?.toFixed(1) || '4.8'}</span></div><h2>{restaurant?.name || 'Kaveri Restaurant'}</h2><p>{restaurant?.description || 'Heritage recipes, aromatic biryanis, and warm hospitality in the heart of Hyderabad.'}</p><div className="location-line">⌖ {restaurant?.address || 'Banjara Hills, Hyderabad'}</div></div>
-            <div className="context-section menu-preview"><div className="section-heading"><span className="eyebrow">From the kitchen</span><button onClick={event => sendMessage(event, 'Show me your most popular dishes')}>View all ↗</button></div>{dataError ? <p className="muted">Menu details are unavailable right now.</p> : menu.slice(0, 3).map(item => <MenuCard item={item} key={item._id} />)}</div>
-            <div className="context-section reservation-note"><span className="eyebrow">Need a table?</span><p>Tell me your party size and preferred time. I’ll check live availability.</p><button onClick={event => sendMessage(event, 'I want to book a table')}>Start a booking <span>↗</span></button></div>
+            <div className="context-section menu-preview"><div className="section-heading"><span className="eyebrow">From the kitchen</span><button onClick={event => sendMessage(event, 'Show me your most popular dishes')} disabled={chatEnded || loading || restoringHistory}>View all ↗</button></div>{dataError ? <p className="muted">Menu details are unavailable right now.</p> : menu.slice(0, 3).map(item => <MenuCard item={item} key={item._id} />)}</div>
+            <div className="context-section reservation-note"><span className="eyebrow">Need a table?</span><p>Tell me your party size and preferred time. I’ll check live availability.</p><button onClick={event => sendMessage(event, 'I want to book a table')} disabled={chatEnded || loading || restoringHistory}>Start a booking <span>↗</span></button></div>
         </aside>
     </div>
 }

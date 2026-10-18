@@ -666,7 +666,7 @@ export async function handleChat(request: ChatRequest) {
                     bookingDraft.bookingId = booking._id.toString();
                     conversationState.bookingDraft = bookingDraft;
                     delete conversationState.availableTables;
-                    reservationMessage = `Your reservation is confirmed for ${bookingDraft.partySize} guest(s) on ${bookingDraft.date} at ${bookingDraft.time}, Table ${bookingDraft.tableNumber}. Your booking reference is ${bookingDraft.bookingId}.`;
+                    reservationMessage = `Your reservation is confirmed for ${bookingDraft.partySize} guest(s) on ${bookingDraft.date} at ${bookingDraft.time}, Table ${bookingDraft.tableNumber}. Your booking reference is ${bookingDraft.bookingId}. Would you like to end this chat? Select "End chat" below, or keep chatting.`;
                     bookingToolCall = { tool: 'reservation', status: 'completed', summary: 'Reservation was created and confirmed in the booking database.' };
                 } catch (error) {
                     console.error('Reservation creation failed after customer confirmation.', error);

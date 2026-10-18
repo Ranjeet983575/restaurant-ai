@@ -14,6 +14,7 @@ The complete product requirements and implementation direction are maintained in
 - **Semantic Search** - Search restaurants and dishes using natural language
 - **Vector Embeddings** - Each restaurant stores a semantic embedding for similarity search
 - **Restaurant Concierge Chat** - MongoDB-backed conversation state with intent and tool metadata
+- **Conversation controls** - Users can end a chat and start a fresh conversation without deleting saved history
 - **Table Availability** - Table-aware availability checks and reservation-safe booking fields
 - **Bounded tool-calling agent** - Groq selects approved menu or restaurant read tools; tool results are returned to the model before it answers
 - **Human-confirmed reservations** - Booking details and live availability are validated by the API, and a reservation is created only after explicit confirmation
@@ -97,6 +98,7 @@ curl -X POST http://localhost:3000/chat \
 The response includes `reply`, `intent`, `toolCalls`, and persisted `conversationState`. Conversation history is stored in MongoDB when `conversationId` is supplied.
 
 The chat client can restore a saved conversation with `GET /chat/{conversationId}`. Recent turns are included in subsequent LLM requests for follow-up questions; the model receives only the latest 12 stored messages, while the API keeps up to 200 messages per conversation.
+The UI's **End chat** control closes that client conversation and offers **Start new chat** with a new conversation ID; the previous conversation remains saved. Successful booking confirmations invite the user to end the chat.
 
 ## Concierge agent architecture
 
