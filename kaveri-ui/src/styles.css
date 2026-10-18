@@ -310,6 +310,20 @@ input:focus-visible {
     font-size: 10px;
 }
 
+.fallback-note {
+    display: block;
+    margin: 6px 3px 0;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.tool-trace {
+    display: block;
+    margin: 6px 3px 0;
+    color: var(--leaf);
+    font-size: 10px;
+}
+
 .typing {
     display: flex;
     gap: 4px;

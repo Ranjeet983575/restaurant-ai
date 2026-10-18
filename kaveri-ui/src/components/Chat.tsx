@@ -1,10 +1,12 @@
 import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
-import { callChatApi, callMenuApi, callRestaurantApi, ChatResponse, MenuItem, Restaurant } from '../services/api'
+import { callChatApi, callConversationApi, callMenuApi, callRestaurantApi, ChatResponse, MenuItem, Restaurant } from '../services/api'
 
 type Message = {
     role: 'user' | 'assistant'
     text: string
     createdAt: Date
+    fallback?: boolean
+    toolCalls?: ChatResponse['toolCalls']
     tables?: ChatResponse['conversationState']['availableTables']
 }
 
@@ -42,6 +44,8 @@ export default function Chat() {
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
+    const [restoringHistory, setRestoringHistory] = useState(true)
+    const [historyError, setHistoryError] = useState(false)
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
     const [menu, setMenu] = useState<MenuItem[]>([])
     const [dataError, setDataError] = useState(false)
@@ -57,13 +61,36 @@ export default function Chat() {
     }, [])
 
     useEffect(() => {
+        let cancelled = false
+        callConversationApi(conversationId)
+            .then(conversation => {
+                if (!cancelled) {
+                    setMessages(conversation.messages.map(message => ({
+                        role: message.role,
+                        text: message.text,
+                        createdAt: new Date(message.createdAt),
+                        toolCalls: message.toolCalls,
+                    })))
+                }
+            })
+            .catch(() => {
+                if (!cancelled) setHistoryError(true)
+            })
+            .finally(() => {
+                if (!cancelled) setRestoringHistory(false)
+            })
+
+        return () => { cancelled = true }
+    }, [conversationId])
+
+    useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages, loading])
 
     async function sendMessage(event: FormEvent, value = input) {
         event.preventDefault()
         const text = value.trim()
-        if (!text || loading) return
+        if (!text || loading || restoringHistory) return
 
         const userMessage: Message = { role: 'user', text, createdAt: new Date() }
         const history = [...messages, userMessage]
@@ -74,7 +101,7 @@ export default function Chat() {
         try {
             const response = await callChatApi(history.map(message => ({ role: message.role, text: message.text })), conversationId)
             const availabilityWasChecked = response.toolCalls?.some(tool => tool.tool === 'availability' && tool.status === 'completed')
-            setMessages(current => [...current, { role: 'assistant', text: response.reply || response.message, createdAt: new Date(), tables: availabilityWasChecked ? response.conversationState?.availableTables : undefined }])
+            setMessages(current => [...current, { role: 'assistant', text: response.reply || response.message, createdAt: new Date(), fallback: response.fallback, tables: availabilityWasChecked ? response.conversationState?.availableTables : undefined }])
         } catch {
             setMessages(current => [...current, { role: 'assistant', text: "I'm having trouble connecting to Kaveri right now. Please try again in a moment.", createdAt: new Date() }])
         } finally {
@@ -95,15 +122,16 @@ export default function Chat() {
 
         <main className="chat-column">
             <header className="chat-header"><div className="assistant-avatar">K</div><div><p className="eyebrow">Your dining guide</p><h1>Kaveri Concierge</h1></div><div className="online-pill"><span className="status-dot" /> Online</div></header>
+            {historyError && <p className="muted" role="alert">Previous messages could not be loaded. Your new messages can still be sent.</p>}
             <section className="conversation" aria-live="polite">
-                {messages.length === 0 ? <div className="welcome-panel"><p className="eyebrow">Welcome to Kaveri</p><h2>Let’s find your<br /><em>next favourite.</em></h2><p className="welcome-copy">Ask about our menu, discover a dish, or let us arrange your table.</p><div className="prompt-grid">{prompts.map(prompt => <button key={prompt.icon} onClick={event => sendMessage(event, prompt.value)}><span>{prompt.icon}</span>{prompt.label}<b>↗</b></button>)}</div></div> : messages.map((message, index) => <div className={`message-row ${message.role}`} key={`${message.createdAt.toISOString()}-${index}`}>
+                {restoringHistory ? <div className="welcome-panel"><p className="eyebrow">Restoring conversation</p></div> : messages.length === 0 ? <div className="welcome-panel"><p className="eyebrow">Welcome to Kaveri</p><h2>Let’s find your<br /><em>next favourite.</em></h2><p className="welcome-copy">Ask about our menu, discover a dish, or let us arrange your table.</p><div className="prompt-grid">{prompts.map(prompt => <button key={prompt.icon} onClick={event => sendMessage(event, prompt.value)}><span>{prompt.icon}</span>{prompt.label}<b>↗</b></button>)}</div></div> : messages.map((message, index) => <div className={`message-row ${message.role}`} key={`${message.createdAt.toISOString()}-${index}`}>
                     {message.role === 'assistant' && <div className="message-avatar">K</div>}
-                    <div className="message-wrap"><div className="message-bubble">{message.text}</div>{message.tables && message.tables.length > 0 && <div className="availability-card"><p className="eyebrow">Available tables</p>{message.tables.map(table => <div className="table-option" key={table.tableId}><span>{table.tableNumber}</span><strong>Table for {table.capacity}</strong><small>{table.area.replace('_', ' ')}</small></div>)}</div>}<time>{formatTime(message.createdAt)}</time></div>
+                    <div className="message-wrap"><div className="message-bubble">{message.text}</div>{message.toolCalls && message.toolCalls.length > 0 && <small className="tool-trace">Agent actions: {message.toolCalls.map(tool => `${tool.tool} · ${tool.status}`).join(' / ')}</small>}{message.fallback && <small className="fallback-note">Limited response mode: the AI service is unavailable.</small>}{message.tables && message.tables.length > 0 && <div className="availability-card"><p className="eyebrow">Available tables</p>{message.tables.map(table => <div className="table-option" key={table.tableId}><span>{table.tableNumber}</span><strong>Table for {table.capacity}</strong><small>{table.area.replace('_', ' ')}</small></div>)}</div>}<time>{formatTime(message.createdAt)}</time></div>
                 </div>)}
                 {loading && <div className="message-row assistant"><div className="message-avatar">K</div><div className="typing" aria-label="Kaveri AI is thinking"><i /><i /><i /></div></div>}
                 <div ref={messagesEndRef} />
             </section>
-            <form className="composer" onSubmit={sendMessage}><input aria-label="Message Kaveri" value={input} onChange={event => setInput(event.target.value)} placeholder="Ask Kaveri anything..." disabled={loading} /><button type="submit" aria-label="Send message" disabled={loading || !input.trim()}>↗</button></form>
+            <form className="composer" onSubmit={sendMessage}><input aria-label="Message Kaveri" value={input} onChange={event => setInput(event.target.value)} placeholder="Ask Kaveri anything..." disabled={loading || restoringHistory} /><button type="submit" aria-label="Send message" disabled={loading || restoringHistory || !input.trim()}>↗</button></form>
             <p className="composer-note">Kaveri uses the restaurant’s live menu and availability.</p>
         </main>
 

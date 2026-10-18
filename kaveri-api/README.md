@@ -15,6 +15,8 @@ The complete product requirements and implementation direction are maintained in
 - **Vector Embeddings** - Each restaurant stores a semantic embedding for similarity search
 - **Restaurant Concierge Chat** - MongoDB-backed conversation state with intent and tool metadata
 - **Table Availability** - Table-aware availability checks and reservation-safe booking fields
+- **Bounded tool-calling agent** - Groq selects approved menu or restaurant read tools; tool results are returned to the model before it answers
+- **Human-confirmed reservations** - Booking details and live availability are validated by the API, and a reservation is created only after explicit confirmation
 - **Automatic Seeding** - Restaurants, menus, profiles, booking slots, and tables are seeded at startup
 - **Swagger UI** - Interactive API documentation
 
@@ -93,6 +95,41 @@ curl -X POST http://localhost:3000/chat \
 ```
 
 The response includes `reply`, `intent`, `toolCalls`, and persisted `conversationState`. Conversation history is stored in MongoDB when `conversationId` is supplied.
+
+The chat client can restore a saved conversation with `GET /chat/{conversationId}`. Recent turns are included in subsequent LLM requests for follow-up questions; the model receives only the latest 12 stored messages, while the API keeps up to 200 messages per conversation.
+
+## Concierge agent architecture
+
+The concierge uses a **bounded, tool-using LLM agent for read-only discovery**, with a deterministic application workflow for reservation writes:
+
+```text
+React chat
+  -> POST /chat (conversationId + latest turn)
+  -> load recent messages and persisted booking state from MongoDB
+  -> classify the task and retrieve trusted restaurant/menu context
+  -> Groq chooses an allow-listed read tool when needed
+       menu_search(query) | restaurant_info()
+  -> API validates arguments, runs the tool, and returns its result to Groq
+  -> Groq writes the grounded response
+  -> API persists the messages and workflow state
+
+Reservation flow (application controlled):
+  collect date/time/party size -> check live availability -> select table
+  -> collect name and phone or email -> show confirmation summary
+  -> explicit customer confirmation -> recheck availability -> create booking
+```
+
+The model cannot create a reservation through function calling. Booking creation is a side effect, so only the backend workflow may call the reservation service, and only after required fields, the selected table, and an explicit confirmation have been validated. The booking response is generated from the persisted booking result, rather than trusting the model to claim success.
+
+Implementation details:
+
+- Tool schemas live in `src/tools/agent-tools.ts`; only the API-owned dispatcher in `src/tools/agent-tool-executor.ts` can execute them. Arguments are parsed and validated server-side.
+- The agent allows at most three tool rounds in one request and caps the text returned by tools. Tool names are filtered by task intent.
+- The last 12 stored messages are provided to the LLM; older chat remains in MongoDB and can be restored in the UI, but is not automatically part of the model context.
+- Groq tool-calling requests require `GROQ_API_KEY` and a compatible `GROQ_MODEL`. If the LLM is unavailable, the API falls back to deterministic responses and reports `fallback: true`.
+- `conversationState.bookingDraft` contains workflow data, while restaurant/menu facts and availability are loaded from their backing services. The LLM is not the source of truth for bookings.
+
+This is a deliberately bounded agentic design suitable for a concierge MVP/demo. Before production reservations, use an atomic database strategy or transaction/index design to prevent two concurrent confirmations from booking the same table and time.
 
 ## Sample Data - Kaveri Restaurant
 
@@ -561,5 +598,3 @@ SKIP_SEED=false
 ## License
 
 MIT
-
-

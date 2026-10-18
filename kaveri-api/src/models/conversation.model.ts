@@ -4,6 +4,11 @@ export interface IConversationMessage {
     role: 'user' | 'assistant';
     text: string;
     createdAt: Date;
+    toolCalls?: Array<{
+        tool: 'restaurant_info' | 'menu_search' | 'availability' | 'reservation';
+        status: 'completed' | 'failed' | 'needs_input' | 'not_run';
+        summary: string;
+    }>;
 }
 
 export interface IConversation extends Document {
@@ -29,6 +34,17 @@ const conversationMessageSchema = new Schema<IConversationMessage>(
             type: Date,
             default: Date.now,
         },
+        toolCalls: [{
+            tool: {
+                type: String,
+                enum: ['restaurant_info', 'menu_search', 'availability', 'reservation'],
+            },
+            status: {
+                type: String,
+                enum: ['completed', 'failed', 'needs_input', 'not_run'],
+            },
+            summary: { type: String },
+        }],
     },
     { _id: false }
 );

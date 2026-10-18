@@ -19,5 +19,5 @@ export async function menuSearchTool(query: string, limit = 8) {
         return normalized.split(/\s+/).some(term => term.length > 2 && searchable.includes(term)) || /menu|dish|food|recommend/.test(normalized);
     });
 
-    return (filtered.length ? filtered : menus).slice(0, limit);
+    return filtered.slice(0, limit);
 }

@@ -51,7 +51,7 @@ export interface TableOption {
 
 export interface ToolCall {
     tool: string
-    status: 'completed' | 'needs_input' | 'not_run'
+    status: 'completed' | 'failed' | 'needs_input' | 'not_run'
     summary: string
 }
 
@@ -59,6 +59,7 @@ export interface ChatResponse {
     conversationId?: string
     message: string
     reply: string
+    fallback?: boolean
     intent?: string
     toolCalls?: ToolCall[]
     conversationState?: {
@@ -70,6 +71,16 @@ export interface ChatResponse {
             tableType: string
         }>
     }
+}
+
+export interface ConversationHistoryResponse {
+    conversationId: string
+    messages: Array<{
+        role: 'user' | 'assistant'
+        text: string
+        createdAt: string
+        toolCalls?: ToolCall[]
+    }>
 }
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$|\s+/g, '')
@@ -135,11 +146,20 @@ export async function callChatApi(messages: Array<{ role: string, text: string }
     const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId, query: lastMessage, limit: 5 }),
+        body: JSON.stringify({ conversationId, query: lastMessage, messages, limit: 5 }),
     })
     if (!resp.ok) {
         const errorText = await resp.text()
         throw new Error(`chat failed: ${resp.status} ${errorText}`)
     }
     return resp.json() as Promise<ChatResponse>
+}
+
+export async function callConversationApi(conversationId: string): Promise<ConversationHistoryResponse> {
+    const resp = await fetch(`${CHAT_URL}/${encodeURIComponent(conversationId)}`)
+    if (!resp.ok) {
+        const errorText = await resp.text()
+        throw new Error(`conversation history failed: ${resp.status} ${errorText}`)
+    }
+    return resp.json() as Promise<ConversationHistoryResponse>
 }

@@ -1,7 +1,39 @@
 import { Router, Request, Response } from 'express';
-import { handleChat } from '../services/chat.service';
+import { getConversation, handleChat } from '../services/chat.service';
 
 const router = Router();
+
+/**
+ * @openapi
+ * /chat/{conversationId}:
+ *   get:
+ *     summary: Restore a saved conversation and its workflow state
+ *     tags: [Chat]
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Conversation history and state returned successfully
+ *       500:
+ *         description: Conversation history could not be loaded
+ */
+router.get('/:conversationId', async (req: Request, res: Response) => {
+    try {
+        const conversationId = req.params.conversationId;
+        if (typeof conversationId !== 'string' || !conversationId) {
+            res.status(400).json({ success: false, error: 'conversationId is required' });
+            return;
+        }
+        const result = await getConversation(conversationId);
+        res.json({ success: true, ...result });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unable to load conversation' });
+    }
+});
 
 /**
  * @openapi
@@ -15,7 +47,6 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [messages]
  *             properties:
  *               query:
  *                 type: string
@@ -29,6 +60,9 @@ const router = Router();
  *                 items:
  *                   type: object
  *                   properties:
+ *                     role:
+ *                       type: string
+ *                       enum: [user, assistant]
  *                     text:
  *                       type: string
  *               limit:

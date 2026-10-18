@@ -7,10 +7,11 @@ import { Table, ITable } from '../models/table.model';
 
 export interface CreateBookingInput {
     restaurantId: string;
+    restaurantName?: string;
     slotId?: string;
     customerName: string;
-    customerEmail: string;
-    customerPhone: string;
+    customerEmail?: string;
+    customerPhone?: string;
     partySize?: number;
     bookingDate: string;
     slotLabel?: string;
@@ -183,10 +184,36 @@ function getDayName(dateString: string): string | null {
     return parsedDate.toLocaleDateString('en-US', { weekday: 'long' });
 }
 
+function isValidBookingDate(dateString: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return false;
+    const parsed = new Date(`${dateString}T00:00:00Z`);
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === dateString;
+}
+
 export async function createBooking(input: CreateBookingInput): Promise<IBooking> {
     try {
+        const customerName = input.customerName?.trim();
+        const customerEmail = input.customerEmail?.trim() || '';
+        const customerPhone = input.customerPhone?.trim() || '';
+        if (!customerName) {
+            throw new Error('A customer name is required.');
+        }
+        if (!customerEmail && !customerPhone) {
+            throw new Error('A phone number or email address is required.');
+        }
+        if (!isValidBookingDate(input.bookingDate)) {
+            throw new Error('Booking date must be a valid YYYY-MM-DD date.');
+        }
+        if (input.startTime && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(input.startTime)) {
+            throw new Error('Start time must use 24-hour HH:mm format.');
+        }
+
         const partySize = normalizePartySize(input.partySize);
         const slotLabel = input.slotLabel || 'Selected slot';
+        const restaurant = await Restaurant.findById(input.restaurantId).select('name');
+        if (!restaurant) {
+            throw new Error('Restaurant was not found.');
+        }
 
         if (input.slotId) {
             const slot = await BookingSlot.findById(input.slotId);
@@ -201,7 +228,12 @@ export async function createBooking(input: CreateBookingInput): Promise<IBooking
         }
 
         if (input.tableId) {
-            const table = await Table.findOne({ _id: input.tableId, restaurantId: input.restaurantId, status: 'available' });
+            const table = await Table.findOne({
+                _id: input.tableId,
+                restaurantId: input.restaurantId,
+                status: 'available',
+                capacity: { $gte: partySize },
+            });
             if (!table) {
                 throw new Error('Selected table is not available.');
             }
@@ -220,6 +252,10 @@ export async function createBooking(input: CreateBookingInput): Promise<IBooking
 
         const booking = new Booking({
             ...input,
+            restaurantName: input.restaurantName || restaurant.name,
+            customerName,
+            customerEmail,
+            customerPhone,
             partySize,
             slotLabel,
             status: 'confirmed',

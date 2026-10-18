@@ -7,8 +7,8 @@ export interface IBooking extends Document {
     slotId: Types.ObjectId;
     tableId?: Types.ObjectId;
     customerName: string;
-    customerEmail: string;
-    customerPhone: string;
+    customerEmail?: string;
+    customerPhone?: string;
     partySize: number;
     bookingDate: string;
     startTime?: string;
@@ -51,11 +51,11 @@ const bookingSchema = new Schema<IBooking>(
         },
         customerEmail: {
             type: String,
-            required: true,
+            default: '',
         },
         customerPhone: {
             type: String,
-            required: true,
+            default: '',
         },
         partySize: {
             type: Number,

@@ -2,6 +2,6 @@ export type AgentToolName = 'restaurant_info' | 'menu_search' | 'availability' |
 
 export interface ToolCall {
     tool: AgentToolName;
-    status: 'completed' | 'needs_input' | 'not_run';
+    status: 'completed' | 'failed' | 'needs_input' | 'not_run';
     summary: string;
 }
