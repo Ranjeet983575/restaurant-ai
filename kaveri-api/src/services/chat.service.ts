@@ -24,10 +24,10 @@ export type ChatIntent = 'menu' | 'price' | 'diet' | 'restaurant' | 'booking' | 
 
 const MAX_LLM_HISTORY = 12;
 
-function extractPartySize(query: string): number | undefined {
+export function extractPartySize(query: string, allowBareNumber = true): number | undefined {
     const match = query.match(/\b(?:for|party of|table for)\s*(\d{1,2})\b/i);
     if (match) return Number(match[1]);
-    return /^\d{1,2}$/.test(query.trim()) ? Number(query.trim()) : undefined;
+    return allowBareNumber && /^\d{1,2}$/.test(query.trim()) ? Number(query.trim()) : undefined;
 }
 
 function extractBookingDate(query: string): string | undefined {
@@ -105,11 +105,19 @@ export function extractCustomerContact(query: string): { email?: string; phone?:
     };
 }
 
-function extractTableSelection(query: string, availableTables: Array<Record<string, any>> = []): Record<string, any> | undefined {
-    const match = query.trim().match(/^table\s*(\d{1,3})$|^(\d{1,3})$/i);
-    const tableNumber = match?.[1] || match?.[2];
-    if (!tableNumber || !Array.isArray(availableTables)) return undefined;
-    return availableTables.find(table => String(table.tableNumber) === tableNumber);
+export function extractTableSelection(query: string, availableTables: Array<Record<string, any>> = []): Record<string, any> | undefined {
+    const value = query.trim();
+    if (!Array.isArray(availableTables) || !availableTables.length) return undefined;
+
+    const tableMatch = value.match(/^(?:table\s*(?:number\s*)?#?\s*|#)?(\d{1,3})$/i);
+    if (tableMatch) {
+        return availableTables.find(table => String(table.tableNumber) === tableMatch[1]);
+    }
+
+    const capacityMatch = value.match(/^(?:i(?:'d| would)? like )?table for (\d{1,2})(?:\s+guests?)?$/i);
+    if (!capacityMatch) return undefined;
+    const matchingTables = availableTables.filter(table => Number(table.capacity) === Number(capacityMatch[1]));
+    return matchingTables.length === 1 ? matchingTables[0] : undefined;
 }
 
 function selectToolCalls(intent: ChatIntent, query: string, bookingDraft: Record<string, any> = {}): ToolCall[] {
@@ -534,6 +542,10 @@ export async function handleChat(request: ChatRequest) {
         : classifiedIntent === 'general' && contextualFollowUp
             ? inheritedIntent
             : classifiedIntent;
+    const tablesAlreadyPresented = !startsNewBooking && Array.isArray(conversationState.availableTables);
+    const selectedTableForQuery = intent === 'booking'
+        ? extractTableSelection(lastMessage, tablesAlreadyPresented ? conversationState.availableTables : [])
+        : undefined;
     const contact = extractCustomerContact(lastMessage);
     const customerName = extractCustomerName(
         lastMessage,
@@ -545,7 +557,9 @@ export async function handleChat(request: ChatRequest) {
         ? {
             ...existingBookingDraft,
             active: true,
-            partySize: extractPartySize(lastMessage) || existingBookingDraft.partySize,
+            partySize: (selectedTableForQuery || tablesAlreadyPresented
+                ? undefined
+                : extractPartySize(lastMessage)) || existingBookingDraft.partySize,
             date: extractBookingDate(lastMessage) || existingBookingDraft.date,
             time: extractStartTime(lastMessage) || existingBookingDraft.time,
             customerName: customerName || existingBookingDraft.customerName,
@@ -565,9 +579,6 @@ export async function handleChat(request: ChatRequest) {
         bookingDraft.bookingStatus = 'collecting';
         bookingDraft.availabilityChecked = false;
     }
-    const selectedTableForQuery = intent === 'booking'
-        ? extractTableSelection(lastMessage, conversationState.availableTables)
-        : undefined;
     if (intent === 'booking') {
         if (selectedTableForQuery) {
             bookingDraft.tableId = selectedTableForQuery.tableId;

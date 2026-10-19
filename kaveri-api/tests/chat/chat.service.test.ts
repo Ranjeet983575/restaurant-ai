@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { classifyUserIntent, extractCustomerContact, extractCustomerName, isExplicitBookingConfirmation, rerankMenuResults, resolveChatQuery } from '../../src/services/chat.service';
+import { classifyUserIntent, extractCustomerContact, extractCustomerName, extractPartySize, extractTableSelection, isExplicitBookingConfirmation, rerankMenuResults, resolveChatQuery } from '../../src/services/chat.service';
 import { buildLLMMessages, runAgentToolLoop } from '../../src/services/llm.service';
 import { conciergeTools, parseConciergeToolArguments } from '../../src/tools/agent-tools';
 import { executeConciergeTool } from '../../src/tools/agent-tool-executor';
@@ -116,6 +116,22 @@ test('recognizes booking phone numbers with 7 to 15 digits', () => {
     assert.deepEqual(extractCustomerContact('123456'), {});
     assert.deepEqual(extractCustomerContact('1234567890123456'), {});
     assert.deepEqual(extractCustomerContact('guest@example.com'), { email: 'guest@example.com' });
+});
+
+test('distinguishes selecting a table from changing the party size', () => {
+    const tables = [
+        { tableId: 'table-1', tableNumber: '1', capacity: 2 },
+        { tableId: 'table-2', tableNumber: '2', capacity: 4 },
+        { tableId: 'table-3', tableNumber: '3', capacity: 4 },
+    ];
+
+    assert.equal(extractTableSelection('1', tables)?.tableId, 'table-1');
+    assert.equal(extractTableSelection('Table 1', tables)?.tableId, 'table-1');
+    assert.equal(extractTableSelection('Table for 2', tables)?.tableId, 'table-1');
+    assert.equal(extractTableSelection('Table for 4', tables), undefined);
+    assert.equal(extractTableSelection('1 Ta', tables), undefined);
+    assert.equal(extractPartySize('1'), 1);
+    assert.equal(extractPartySize('1', false), undefined);
 });
 
 test('reranks semantic results for spicy and crispy queries', () => {
