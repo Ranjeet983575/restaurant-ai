@@ -491,10 +491,11 @@ input:focus-visible {
 }
 
 .context-panel {
+    display: flex;
+    flex-direction: column;
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
     padding: 31px 23px;
     border-left: 1px solid var(--line);
     background: var(--panel);
@@ -508,6 +509,15 @@ input:focus-visible {
 
 .context-section:last-child {
     border-bottom: 0;
+    margin-bottom: 0;
+}
+
+.menu-preview {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
 }
 
 .section-heading {
@@ -612,6 +622,8 @@ input:focus-visible {
 }
 
 .reservation-note {
+    flex: 0 0 auto;
+    margin-top: auto;
     padding: 17px;
     border: 0;
     background: var(--leaf-dark);
