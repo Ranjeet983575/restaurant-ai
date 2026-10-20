@@ -4,12 +4,14 @@ import assert from 'node:assert/strict';
 import { connectDB, disconnectDB } from '../../src/config/mongodb';
 import { Restaurant } from '../../src/models/restaurant.model';
 import { RestaurantProfile } from '../../src/models/restaurant-profile.model';
+import { Booking } from '../../src/models/booking.model';
 import { BookingSlot } from '../../src/models/booking-slot.model';
 import {
     buildSlotLabel,
     normalizePartySize,
     getRestaurantProfileByRestaurantId,
     getBookingSlots,
+    getDailyBookingSlotAvailability,
     createBooking,
 } from '../../src/services/booking.service';
 
@@ -19,12 +21,14 @@ before(async () => {
 
 beforeEach(async () => {
     await RestaurantProfile.deleteMany({});
+    await Booking.deleteMany({});
     await BookingSlot.deleteMany({});
     await Restaurant.deleteMany({});
 });
 
 after(async () => {
     await RestaurantProfile.deleteMany({});
+    await Booking.deleteMany({});
     await BookingSlot.deleteMany({});
     await Restaurant.deleteMany({});
     await disconnectDB();
@@ -94,6 +98,54 @@ test('getRestaurantProfileByRestaurantId and getBookingSlots resolve restaurant 
     const slots = await getBookingSlots('Demo Bistro', 'Monday');
     assert.equal(slots.length, 1);
     assert.equal(slots[0].restaurantName, 'Demo Bistro');
+});
+
+test('getDailyBookingSlotAvailability marks active bookings booked without exposing booking details', async () => {
+    const restaurant = await Restaurant.create({
+        name: 'Daily Slots Bistro',
+        cuisine: ['Indian'],
+        description: 'A test restaurant',
+        location: 'Hyderabad',
+        address: '123 Demo Street',
+        phone: '04012345678',
+        price_range: 'moderate',
+        tags: ['test'],
+    });
+    const bookedSlot = await BookingSlot.create({
+        restaurantId: restaurant._id,
+        restaurantName: restaurant.name,
+        day: 'Monday',
+        startTime: '18:30',
+        endTime: '19:30',
+        label: '18:30 - 19:30',
+        capacity: 4,
+        available: true,
+    });
+    await BookingSlot.create({
+        restaurantId: restaurant._id,
+        restaurantName: restaurant.name,
+        day: 'Monday',
+        startTime: '20:00',
+        endTime: '21:00',
+        label: '20:00 - 21:00',
+        capacity: 4,
+        available: true,
+    });
+    await Booking.create({
+        restaurantId: restaurant._id,
+        restaurantName: restaurant.name,
+        slotId: bookedSlot._id,
+        customerName: 'Private Customer',
+        partySize: 2,
+        bookingDate: '2030-01-07',
+        startTime: '18:30',
+        slotLabel: '18:30 - 19:30',
+        status: 'confirmed',
+    });
+
+    const slots = await getDailyBookingSlotAvailability(restaurant._id.toString(), '2030-01-07');
+    assert.deepEqual(slots.map(slot => slot.status), ['booked', 'available']);
+    assert.equal('customerName' in slots[0], false);
 });
 
 test('createBooking rejects a slot when it does not match the selected booking date', async () => {

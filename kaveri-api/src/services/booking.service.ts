@@ -30,6 +30,15 @@ export interface TableAvailabilityInput {
     tablePreference?: string;
 }
 
+export interface DailyBookingSlotAvailability {
+    slotId: string;
+    startTime: string;
+    endTime: string;
+    label: string;
+    capacity: number;
+    status: 'available' | 'booked' | 'unavailable';
+}
+
 export interface CreateBookingSlotInput {
     restaurantId: string;
     restaurantName?: string;
@@ -173,6 +182,46 @@ export async function getBookingSlots(restaurantIdentifier: string, day?: string
     } catch (error) {
         throw new Error(`Failed to fetch booking slots: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+}
+
+export async function getDailyBookingSlotAvailability(
+    restaurantIdentifier: string,
+    bookingDate: string
+): Promise<DailyBookingSlotAvailability[]> {
+    if (!isValidBookingDate(bookingDate)) {
+        throw new Error('Booking date must be a valid YYYY-MM-DD date.');
+    }
+
+    const restaurantId = await resolveRestaurantId(restaurantIdentifier);
+    if (!restaurantId) {
+        throw new Error('Restaurant was not found.');
+    }
+
+    const day = new Date(`${bookingDate}T00:00:00Z`).toLocaleDateString('en-US', {
+        weekday: 'long',
+        timeZone: 'UTC',
+    });
+    const slots = await BookingSlot.find({ restaurantId, day }).sort({ startTime: 1 });
+    const activeBookings = await Booking.find({
+        restaurantId,
+        bookingDate,
+        status: { $in: ['pending', 'confirmed'] },
+    }).select('slotId startTime').lean();
+
+    return slots.map(slot => {
+        const isBooked = activeBookings.some(booking =>
+            (booking.slotId && booking.slotId.toString() === slot._id.toString()) ||
+            booking.startTime === slot.startTime
+        );
+        return {
+            slotId: slot._id.toString(),
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            label: slot.label,
+            capacity: slot.capacity,
+            status: isBooked ? 'booked' : slot.available ? 'available' : 'unavailable',
+        };
+    });
 }
 
 function getDayName(dateString: string): string | null {

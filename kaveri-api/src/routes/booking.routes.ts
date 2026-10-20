@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import {
     createBooking,
     createBookingSlot,
+    getDailyBookingSlotAvailability,
     getBookingSlots,
     getBookingsByRestaurant,
     CreateBookingInput,
@@ -17,6 +18,27 @@ interface BookingRouteParams {
 interface BookingSlotsQuery {
     day?: string;
 }
+
+interface BookingDateQuery {
+    date?: string;
+}
+
+router.get('/slots/:restaurantId/availability', async (
+    req: Request<BookingRouteParams, {}, {}, BookingDateQuery>,
+    res: Response
+) => {
+    try {
+        if (!req.query.date) {
+            res.status(400).json({ success: false, error: 'date is required in YYYY-MM-DD format' });
+            return;
+        }
+
+        const slots = await getDailyBookingSlotAvailability(req.params.restaurantId, req.query.date);
+        res.json({ success: true, data: slots });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error instanceof Error ? error.message : 'Availability lookup failed' });
+    }
+});
 
 /**
  * @openapi

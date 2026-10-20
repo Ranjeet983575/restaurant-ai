@@ -49,6 +49,15 @@ export interface TableOption {
     features: string[]
 }
 
+export interface BookingSlotAvailability {
+    slotId: string
+    startTime: string
+    endTime: string
+    label: string
+    capacity: number
+    status: 'available' | 'booked' | 'unavailable'
+}
+
 export interface ToolCall {
     tool: string
     status: 'completed' | 'failed' | 'needs_input' | 'not_run'
@@ -126,6 +135,11 @@ export async function callMenuApi(): Promise<MenuItem[]> {
 
 export async function callAvailabilityApi(query: URLSearchParams): Promise<TableOption[]> {
     return requestJson<TableOption[]>(`${API_BASE}/api/tables/availability?${query.toString()}`)
+}
+
+export async function callBookingSlotAvailability(restaurantId: string, date: string): Promise<BookingSlotAvailability[]> {
+    const query = new URLSearchParams({ date })
+    return requestJson<BookingSlotAvailability[]>(`${API_BASE}/api/bookings/slots/${encodeURIComponent(restaurantId)}/availability?${query}`)
 }
 
 export async function callSearchApi(query: string, limit = 5): Promise<unknown> {
