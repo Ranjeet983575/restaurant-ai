@@ -72,6 +72,7 @@ export interface ChatResponse {
     intent?: string
     toolCalls?: ToolCall[]
     conversationState?: {
+        selectedTableForBooking?: boolean
         availableTables?: Array<{
             tableId: string
             tableNumber: string

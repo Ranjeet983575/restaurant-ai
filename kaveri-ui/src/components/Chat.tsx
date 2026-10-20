@@ -171,7 +171,7 @@ export default function Chat() {
         try {
             const response = await callChatApi(history.map(message => ({ role: message.role, text: message.text })), conversationId)
             const availabilityWasChecked = response.toolCalls?.some(tool => tool.tool === 'availability' && tool.status === 'completed')
-            setMessages(current => [...current, { role: 'assistant', text: response.reply || response.message, createdAt: new Date(), fallback: response.fallback, tables: availabilityWasChecked ? response.conversationState?.availableTables : undefined }])
+            setMessages(current => [...current, { role: 'assistant', text: response.reply || response.message, createdAt: new Date(), fallback: response.fallback, tables: availabilityWasChecked && !response.conversationState?.selectedTableForBooking ? response.conversationState?.availableTables : undefined }])
         } catch {
             setMessages(current => [...current, { role: 'assistant', text: "I'm having trouble connecting to Kaveri right now. Please try again in a moment.", createdAt: new Date() }])
         } finally {
@@ -191,6 +191,16 @@ export default function Chat() {
             startNewChat(question)
         } else {
             setInput(question)
+        }
+    }
+
+    function bookSelectedTable(table: TableOption) {
+        const request = `I want to book table ${table.tableNumber} for ${partySize} guests on ${bookingDate} at ${bookingTime}.`
+        setActiveSection('concierge')
+        if (chatEnded) {
+            startNewChat(request)
+        } else {
+            setInput(request)
         }
     }
 
@@ -306,7 +316,7 @@ export default function Chat() {
                 {availabilityError && <p className="availability-feedback error" role="alert">{availabilityError}</p>}
                 {availableTables !== null && <div className="availability-results" aria-live="polite">
                     <p className="eyebrow">{availableTables.length ? `${availableTables.length} available ${availableTables.length === 1 ? 'table' : 'tables'}` : 'No tables available'}</p>
-                    {availableTables.length === 0 ? <p className="availability-feedback">No tables match that date, time, and party size. Try another time or a smaller group.</p> : <div className="booking-table-grid">{availableTables.map(table => <article className="booking-table-card" key={table._id}><span className="eyebrow">{table.area.replace(/_/g, ' ')}</span><h3>Table {table.tableNumber}</h3><p>Seats up to {table.capacity} · {table.tableType.replace(/_/g, ' ')}</p>{table.features.length > 0 && <small>{table.features.join(' · ')}</small>}</article>)}</div>}
+                    {availableTables.length === 0 ? <p className="availability-feedback">No tables match that date, time, and party size. Try another time or a smaller group.</p> : <div className="booking-table-grid">{availableTables.map(table => <article className="booking-table-card" key={table._id}><span className="eyebrow">{table.area.replace(/_/g, ' ')}</span><h3>Table {table.tableNumber}</h3><p>Seats up to {table.capacity} · {table.tableType.replace(/_/g, ' ')}</p>{table.features.length > 0 && <small>{table.features.join(' · ')}</small>}<button className="book-table-action" type="button" onClick={() => bookSelectedTable(table)} disabled={loading || restoringHistory}>Book this table <span>↗</span></button></article>)}</div>}
                 </div>}
                 <div className="booking-info-grid">
                     <article className="booking-info-card"><span className="eyebrow">Find us</span><h3>{restaurant?.name || 'Kaveri Restaurant'}</h3><p>{restaurant?.address || 'Restaurant address unavailable.'}</p>{restaurant?.phone && <a href={`tel:${restaurant.phone}`}>{restaurant.phone}</a>}</article>

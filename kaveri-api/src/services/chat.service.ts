@@ -120,6 +120,10 @@ export function extractTableSelection(query: string, availableTables: Array<Reco
     return matchingTables.length === 1 ? matchingTables[0] : undefined;
 }
 
+export function extractRequestedTableNumber(query: string): string | undefined {
+    return query.match(/\b(?:book|reserve)\s+table\s*(?:number\s*)?#?\s*(\d{1,3})\b/i)?.[1];
+}
+
 function selectToolCalls(intent: ChatIntent, query: string, bookingDraft: Record<string, any> = {}): ToolCall[] {
     if (intent === 'booking') {
         if (bookingDraft.bookingStatus === 'awaiting_confirmation') {
@@ -389,7 +393,9 @@ function buildGroundedFallback(
             return `Please confirm this reservation: ${bookingDraft.partySize} guest(s), ${bookingDraft.date} at ${bookingDraft.time}, ${bookingDraft.restaurantName || 'Kaveri'}, Table ${bookingDraft.tableNumber}. Reply "confirm" to place it or tell me what to change.`;
         }
         if (bookingDraft.tableId) {
-            if (!bookingDraft.customerName) return 'What name should I put on the reservation?';
+            if (!bookingDraft.customerName) {
+                return `Got it — Table ${bookingDraft.tableNumber} for ${bookingDraft.partySize} guest(s) on ${bookingDraft.date} at ${bookingDraft.time}. What name should I put on the reservation?`;
+            }
             if (!bookingDraft.customerEmail && !bookingDraft.customerPhone) return 'Please share a phone number or email address for the reservation.';
         }
         if (bookingDraft.bookingStatus === 'confirmed') {
@@ -552,6 +558,7 @@ export async function handleChat(request: ChatRequest) {
     const existingBookingDraft = startsNewBooking ? {} : conversationState.bookingDraft || {};
     if (startsNewBooking) {
         delete conversationState.availableTables;
+        delete conversationState.selectedTableForBooking;
     }
     // Classify the latest message, then inherit booking or prior-message intent for context-only follow-ups.
     const classifiedIntent = classifyUserIntent(lastMessage);
@@ -632,13 +639,24 @@ export async function handleChat(request: ChatRequest) {
                 startTime: bookingDraft.time,
                 partySize: bookingDraft.partySize,
             });
-            conversationState.availableTables = tables.map(table => ({
+            const availableTables = tables.map(table => ({
                 tableId: table._id.toString(),
                 tableNumber: table.tableNumber,
                 capacity: table.capacity,
                 area: table.area,
                 tableType: table.tableType,
             }));
+            conversationState.availableTables = availableTables;
+            const requestedTableNumber = extractRequestedTableNumber(lastMessage);
+            const preferredTable = requestedTableNumber
+                ? availableTables.find(table => String(table.tableNumber) === requestedTableNumber)
+                : undefined;
+            if (preferredTable) {
+                bookingDraft.tableId = preferredTable.tableId;
+                bookingDraft.tableNumber = preferredTable.tableNumber;
+                bookingDraft.restaurantName = restaurant.name;
+                bookingDraft.bookingStatus = 'collecting';
+            }
             bookingDraft.availabilityChecked = true;
             availabilityWasChecked = true;
         }
@@ -738,6 +756,11 @@ export async function handleChat(request: ChatRequest) {
         }
         delete bookingDraft.availableTables;
         conversationState.bookingDraft = bookingDraft;
+        if (bookingDraft.tableId) {
+            conversationState.selectedTableForBooking = true;
+        } else {
+            delete conversationState.selectedTableForBooking;
+        }
     }
 
     let toolCalls: ToolCall[] = bookingToolCall ? [bookingToolCall] : [];

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { classifyUserIntent, extractCustomerContact, extractCustomerName, extractPartySize, extractTableSelection, isExplicitBookingConfirmation, rerankMenuResults, resolveChatQuery } from '../../src/services/chat.service';
+import { classifyUserIntent, extractCustomerContact, extractCustomerName, extractPartySize, extractRequestedTableNumber, extractTableSelection, isExplicitBookingConfirmation, rerankMenuResults, resolveChatQuery } from '../../src/services/chat.service';
 import { buildLLMMessages, runAgentToolLoop } from '../../src/services/llm.service';
 import { conciergeTools, parseConciergeToolArguments } from '../../src/tools/agent-tools';
 import { executeConciergeTool } from '../../src/tools/agent-tool-executor';
@@ -133,6 +133,11 @@ test('distinguishes selecting a table from changing the party size', () => {
     assert.equal(extractTableSelection('1 Ta', tables), undefined);
     assert.equal(extractPartySize('1'), 1);
     assert.equal(extractPartySize('1', false), undefined);
+});
+
+test('extracts the explicitly requested table from a booking handoff', () => {
+    assert.equal(extractRequestedTableNumber('I want to book table 2 for 4 guests on 2026-10-20 at 19:00.'), '2');
+    assert.equal(extractRequestedTableNumber('I want to book for 4 guests at 19:00.'), undefined);
 });
 
 test('reranks semantic results for spicy and crispy queries', () => {
