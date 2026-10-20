@@ -152,6 +152,12 @@ export default function Chat() {
         wasLoading.current = loading
     }, [loading, chatEnded, restoringHistory])
 
+    useEffect(() => {
+        if (activeSection === 'concierge' && input && !chatEnded && !loading && !restoringHistory) {
+            inputRef.current?.focus()
+        }
+    }, [activeSection, input, chatEnded, loading, restoringHistory])
+
     async function submitMessage(value: string) {
         const text = value.trim()
         if (!text || loading || restoringHistory || chatEnded) return
@@ -176,6 +182,16 @@ export default function Chat() {
     function sendMessage(event: FormEvent, value = input) {
         event.preventDefault()
         void submitMessage(value)
+    }
+
+    function askAboutDish(dishName: string) {
+        setActiveSection('concierge')
+        const question = `Tell me about ${dishName}`
+        if (chatEnded) {
+            startNewChat(question)
+        } else {
+            setInput(question)
+        }
     }
 
     async function checkAvailability(event: FormEvent) {
@@ -214,12 +230,12 @@ export default function Chat() {
         setChatEnded(true)
     }
 
-    function startNewChat() {
+    function startNewChat(initialInput = '') {
         const newConversationId = crypto.randomUUID()
         window.localStorage.setItem('kaveri-conversation-id', newConversationId)
         setConversationId(newConversationId)
         setMessages([])
-        setInput('')
+        setInput(initialInput)
         setHistoryError(false)
         setRestoringHistory(true)
         setChatEnded(false)
@@ -254,7 +270,7 @@ export default function Chat() {
                     <div className="chat-actions"><button type="button" className="end-chat-button" onClick={endChat} disabled={loading || restoringHistory}>End chat</button></div>
                 </> : <div className="ended-chat-panel" role="status">
                     <p>This chat has ended. Your conversation is saved.</p>
-                    <button type="button" className="new-chat-button" onClick={startNewChat}>Start new chat</button>
+                    <button type="button" className="new-chat-button" onClick={() => startNewChat()}>Start new chat</button>
                 </div>}
             </> : activeSection === 'menu' ? <section className="content-page menu-page">
                 <div className="page-intro"><p className="eyebrow">From our kitchen</p><h2>Something good is cooking.</h2><p>Browse Kaveri’s available dishes, with ingredients and dietary details to help you choose.</p></div>
@@ -264,7 +280,7 @@ export default function Chat() {
                         <h3>{item.name}</h3><p>{item.description}</p>
                         <div className="menu-tags">{item.vegetarian && <span>Vegetarian</span>}{item.vegan && <span>Vegan</span>}{item.spicy_level && item.spicy_level.toLowerCase() !== 'mild' && <span>{item.spicy_level} spice</span>}{item.preparation_time && <span>{item.preparation_time} min</span>}</div>
                         {item.allergens?.length > 0 && <p className="menu-allergens">Allergens: {item.allergens.join(', ')}</p>}
-                        <div className="full-menu-card-footer"><strong>{item.currency === 'INR' ? '₹' : item.currency} {item.price}</strong><button type="button" onClick={() => { setActiveSection('concierge'); void submitMessage(`Tell me about ${item.name}`) }} disabled={chatEnded || loading || restoringHistory}>Ask about this dish <span>↗</span></button></div>
+                        <div className="full-menu-card-footer"><strong>{item.currency === 'INR' ? '₹' : item.currency} {item.price}</strong><button type="button" onClick={() => askAboutDish(item.name)} disabled={loading || restoringHistory}>Ask about this dish <span>↗</span></button></div>
                     </div>
                 </article>)}</div>}
             </section> : <section className="content-page booking-page">

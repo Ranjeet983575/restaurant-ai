@@ -183,7 +183,7 @@ export function classifyUserIntent(message: string): ChatIntent {
         return 'diet';
     }
 
-    if (/menu|dish|dishes|item|items|popular|special|recommend|show me|spicy|crispy|sweet|creamy/i.test(normalized)) {
+    if (/menu|dish|dishes|item|items|popular|special|recommend|show me|spicy|crispy|sweet|creamy|\b(?:tell me about|more about|details about|describe)\b/i.test(normalized)) {
         return 'menu';
     }
 
@@ -351,6 +351,25 @@ function buildGroundedFallback(
     }
 
     if (intent === 'menu' || intent === 'diet' || intent === 'price') {
+        const normalizedQuery = normalizeMenuName(query);
+        const requestedDish = menus.find(menu =>
+            menu.name && normalizedQuery.includes(normalizeMenuName(String(menu.name)))
+        );
+        if (requestedDish) {
+            const priceLabel = requestedDish.currency === 'INR' || !requestedDish.currency
+                ? `₹${requestedDish.price}`
+                : `${requestedDish.currency} ${requestedDish.price}`;
+            const details = [
+                requestedDish.description,
+                requestedDish.ingredients?.length ? `Ingredients: ${requestedDish.ingredients.join(', ')}.` : '',
+                requestedDish.allergens?.length ? `Allergens: ${requestedDish.allergens.join(', ')}.` : '',
+                requestedDish.vegetarian ? 'Vegetarian.' : '',
+                requestedDish.vegan ? 'Vegan.' : '',
+                requestedDish.spicy_level && requestedDish.spicy_level !== 'mild' ? `Spice level: ${requestedDish.spicy_level}.` : '',
+            ].filter(Boolean).join(' ');
+            return `${requestedDish.name} is ${requestedDish.is_available === false ? 'currently unavailable' : `available for ${priceLabel}`}.${details ? ` ${details}` : ''}`;
+        }
+
         const availableMenus = menus
             .filter(menu => menu.is_available !== false)
             .filter(menu => !/vegan/i.test(query) || menu.vegan === true)
@@ -739,6 +758,14 @@ export async function handleChat(request: ChatRequest) {
 
         const rankedSemantic = rerankMenuResults(retrievalQuery, semanticCandidates);
         const seenNames = new Set(rankedSemantic.map(item => item.menu.name));
+        const exactDish = allMenus.find(menu => {
+            const normalizedQuery = normalizeMenuName(lastMessage);
+            const normalizedName = normalizeMenuName(menu.name);
+            return normalizedName.length > 0 && normalizedQuery.includes(normalizedName);
+        });
+        if (exactDish) {
+            seenNames.add(exactDish.name);
+        }
         const keywordCandidates = allMenus
             .map(menu => ({
                 similarity_score: getKeywordScore(retrievalQuery, menu),
@@ -752,7 +779,20 @@ export async function handleChat(request: ChatRequest) {
             }))
             .filter(item => item.similarity_score > 0.25 && !seenNames.has(item.menu.name));
 
-        const combined = [...rankedSemantic, ...keywordCandidates];
+        const combined = [
+            ...rankedSemantic,
+            ...(exactDish && !seenNames.has(exactDish.name) ? [{
+                similarity_score: 1,
+                menu: {
+                    name: exactDish.name,
+                    description: exactDish.description,
+                    vegetarian: exactDish.vegetarian,
+                    vegan: exactDish.vegan,
+                    tags: exactDish.tags,
+                },
+            }] : []),
+            ...keywordCandidates,
+        ];
         const merged = combined
             .sort((a, b) => b.similarity_score - a.similarity_score)
             .slice(0, 8)

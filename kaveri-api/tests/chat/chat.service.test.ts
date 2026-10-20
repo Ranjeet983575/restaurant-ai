@@ -12,6 +12,7 @@ test('classifies menu, price, diet, restaurant, and booking requests', () => {
     assert.equal(classifyUserIntent('Where is your restaurant located?'), 'restaurant');
     assert.equal(classifyUserIntent('Can you reserve a table for 4?'), 'booking');
     assert.equal(classifyUserIntent('Recommend something spicy'), 'menu');
+    assert.equal(classifyUserIntent('Tell me about Chicken Dum Biryani'), 'menu');
     assert.equal(classifyUserIntent('thanks'), 'smalltalk');
     assert.equal(classifyUserIntent('how to end chat?'), 'smalltalk');
     assert.equal(classifyUserIntent('goodbye'), 'smalltalk');
