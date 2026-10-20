@@ -534,6 +534,7 @@ export async function handleChat(request: ChatRequest) {
     if (startsNewBooking) {
         delete conversationState.availableTables;
     }
+    // Classify the latest message, then inherit booking or prior-message intent for context-only follow-ups.
     const classifiedIntent = classifyUserIntent(lastMessage);
     const hasBookingContext = existingBookingDraft.active || (Array.isArray(conversationState.availableTables) && conversationState.availableTables.length > 0);
     const inheritedIntent = previousUserMessage ? classifyUserIntent(previousUserMessage) : 'general';
